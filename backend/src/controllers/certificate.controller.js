@@ -30,3 +30,48 @@ export const generateCertificate = async (req, res) => {
         });
     }
 };
+
+export const getMyCertificates = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const certificates = await prisma.certificate.findMany({
+            where: { userId },
+            include: {
+                opportunity: {
+                    select: {
+                        id: true,
+                        title: true,
+                        organization: {
+                            select: {
+                                name: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: { issuedAt: 'desc' }
+        });
+
+        const formattedCertificates = certificates.map(cert => ({
+            id: cert.id,
+            opportunityId: cert.opportunity.id,
+            opportunityTitle: cert.opportunity.title,
+            organizationName: cert.opportunity.organization.name,
+            certificateUrl: cert.certificateUrl,
+            issuedAt: cert.issuedAt
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: formattedCertificates
+        });
+    } catch (error) {
+        console.error('Get My Certificates Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch certificates',
+            error: error.message
+        });
+    }
+};

@@ -90,9 +90,9 @@ export default function RoleBasedLogin() {
 
         // Redirect based on role
         if (user.role === 'VOLUNTEER') {
-          window.location.href = '/volunteer/dashboard';
+          window.location.href = '/volunteer-dashboard';
         } else if (user.role === 'ORGANIZATION') {
-          window.location.href = '/organization/dashboard';
+          window.location.href = '/organization-dashboard';
         }
       }
 

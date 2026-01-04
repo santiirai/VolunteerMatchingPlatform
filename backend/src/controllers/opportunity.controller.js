@@ -71,3 +71,46 @@ export const getOrgOpportunities = async (req, res) => {
         });
     }
 };
+
+export const getAllOpportunities = async (req, res) => {
+    try {
+        const opportunities = await prisma.opportunity.findMany({
+            where: {
+                date: {
+                    gte: new Date() // Only show future opportunities
+                }
+            },
+            include: {
+                organization: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                _count: {
+                    select: { applications: true }
+                }
+            },
+            orderBy: { date: 'asc' }
+        });
+
+        const formattedOpportunities = opportunities.map(opp => ({
+            ...opp,
+            organizationName: opp.organization.name,
+            applicants: opp._count.applications,
+            status: 'Active'
+        }));
+
+        res.status(200).json({
+            success: true,
+            data: formattedOpportunities
+        });
+    } catch (error) {
+        console.error('Get All Opportunities Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch opportunities',
+            error: error.message
+        });
+    }
+};
