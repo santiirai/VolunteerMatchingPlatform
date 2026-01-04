@@ -72,24 +72,28 @@ export default function RoleBasedLogin() {
         }),
       });
 
-      const data = await response.json();
+      const jsonResponse = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(jsonResponse.error || jsonResponse.message || 'Login failed');
       }
 
       // Store token in localStorage or cookie
-      if (data.data?.token) {
-        localStorage.setItem('authToken', data.data.token);
-        localStorage.setItem('userRole', data.data.user.role);
-        localStorage.setItem('userId', data.data.user.id);
-      }
+      if (jsonResponse.success && jsonResponse.data) {
+        const { token, user } = jsonResponse.data;
 
-      // Redirect based on role
-      if (data.data?.user?.role === 'VOLUNTEER') {
-        window.location.href = '/volunteer/dashboard';
-      } else if (data.data?.user?.role === 'ORGANIZATION') {
-        window.location.href = '/organization/dashboard';
+        if (token) {
+          localStorage.setItem('authToken', token);
+          localStorage.setItem('userRole', user.role);
+          localStorage.setItem('userId', user.id);
+        }
+
+        // Redirect based on role
+        if (user.role === 'VOLUNTEER') {
+          window.location.href = '/volunteer/dashboard';
+        } else if (user.role === 'ORGANIZATION') {
+          window.location.href = '/organization/dashboard';
+        }
       }
 
     } catch (err) {
