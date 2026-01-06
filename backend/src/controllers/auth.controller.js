@@ -21,7 +21,7 @@ export const signup = async (req, res) => {
     // Check if user already exists
     console.log('[Auth Controller] Checking if user exists:', email);
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: email.trim() }
     });
 
     if (existingUser) {
@@ -37,7 +37,7 @@ export const signup = async (req, res) => {
     const user = await prisma.user.create({
       data: {
         name,
-        email,
+        email: email.trim(),
         password, // Plain text password as requested
         role: role || 'VOLUNTEER',
         skills,
@@ -98,7 +98,7 @@ export const login = async (req, res) => {
     // Find user
     console.log('[Auth Controller] Searching for user:', email);
     const user = await prisma.user.findUnique({
-      where: { email }
+      where: { email: email.trim() }
     });
 
     if (!user) {

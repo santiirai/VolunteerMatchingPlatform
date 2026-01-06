@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Eye, EyeOff, Mail, Lock, LogIn, Heart, Building2, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function RoleBasedLogin() {
@@ -65,7 +65,7 @@ export default function RoleBasedLogin() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.email,
+          email: formData.email.trim(),
           password: formData.password,
           role: formData.role,
           rememberMe: rememberMe

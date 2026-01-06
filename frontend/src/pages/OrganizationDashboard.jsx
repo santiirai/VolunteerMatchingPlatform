@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, Building2, Users, Award, MessageCircle, Plus, Search, Filter, Menu, X, LogOut, Bell, Settings, Calendar, MapPin, Clock, CheckCircle, XCircle, Download, Send, Eye, Loader2 } from 'lucide-react';
+import ChatInterface from '../components/ChatInterface';
 
 export default function OrganizationDashboard() {
     const [activeTab, setActiveTab] = useState('overview');
@@ -11,6 +12,7 @@ export default function OrganizationDashboard() {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dataLoading, setDataLoading] = useState(true);
+    const [chatUser, setChatUser] = useState(null);
 
     // State for data
     const [stats, setStats] = useState({
@@ -48,34 +50,59 @@ export default function OrganizationDashboard() {
             const token = localStorage.getItem('authToken');
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Parallel fetching
-            const [oppsRes, appsRes, userRes] = await Promise.all([
-                fetch('/api/opportunities', { headers }),
-                fetch('/api/applications', { headers }), // We created this endpoint
-                fetch('/api/auth/me', { headers })
-            ]);
+            const fetchResource = async (url, setter) => {
+                try {
+                    const res = await fetch(url, { headers });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setter(data.data);
+                        return data.data;
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch ${url}`, e);
+                }
+                return [];
+            };
 
-            if (oppsRes.ok && appsRes.ok && userRes.ok) {
-                const oppsData = await oppsRes.json();
-                const appsData = await appsRes.json();
-                const userData = await userRes.json();
+            // Fetch independently
+            const oppsData = await fetchResource('/api/opportunities', setOpportunities);
+            const appsData = await fetchResource('/api/applications', setApplications);
 
-                setOpportunities(oppsData.data);
-                setApplications(appsData.data);
+            // User Data
+            try {
+                const userRes = await fetch('/api/auth/me', { headers });
+                if (userRes.ok) {
+                    const userData = await userRes.json();
 
-                // Calculate stats
-                const pendingApps = appsData.data.filter(app => app.status === 'PENDING').length;
-                const activeVols = new Set(appsData.data.filter(app => app.status === 'ACCEPTED').map(app => app.volunteerId)).size;
+                    // Calculate stats
+                    const pendingApps = appsData.filter(app => app.status === 'PENDING').length;
+                    const activeVols = new Set(appsData.filter(app => app.status === 'ACCEPTED').map(app => app.volunteerId)).size;
 
-                setStats({
-                    name: userData.data.user.name,
-                    email: userData.data.user.email,
-                    totalOpportunities: oppsData.data.length,
-                    activeVolunteers: activeVols,
-                    pendingApplications: pendingApps,
-                    certificatesIssued: 0 // We'd need a separate count for this or derived from Completed apps with certs
-                });
+                    setStats({
+                        name: userData.data.user.name,
+                        email: userData.data.user.email,
+                        totalOpportunities: oppsData.length,
+                        activeVolunteers: activeVols,
+                        pendingApplications: pendingApps,
+                        certificatesIssued: 0
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to fetch user data', e);
             }
+
+            // Fetch messages for badge (optional internal state)
+            const msgsData = await fetchResource('/api/messages/conversations', (data) => {
+                // calculating unread count could be stored in a ref or state if we add it
+                // For now, let's just use it to toggle the red dot if we add state for it.
+                // But we didn't add state for messages in OrgDashboard yet.
+                // Let's add it or just skip this part to avoid adding state without declaring it.
+            });
+            // Actually, I need to add state for unread count if I want to show it.
+            // Let's skip message fetching for now to avoid breaking state, or adding state.
+            // Given the user didn't ask for it, maybe just stick to robust fetching.
+            // Re-reading my previous thought: "I should apply the same robust fetching pattern".
+            // I will stick to robust fetching only for now to be safe.
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -491,8 +518,11 @@ export default function OrganizationDashboard() {
                                                         )}
                                                         <button
                                                             onClick={() => {
-                                                                setSelectedApplication(app);
-                                                                setShowMessageModal(true);
+                                                                setChatUser({
+                                                                    id: app.volunteerId,
+                                                                    name: app.volunteerName
+                                                                });
+                                                                setActiveTab('messages');
                                                             }}
                                                             className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
                                                             title="Send Message"
@@ -516,12 +546,12 @@ export default function OrganizationDashboard() {
                     )}
 
                     {activeTab === 'messages' && (
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-gray-900">Messages</h2>
-                            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
-                                <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500">Send messages to volunteers from the Applications tab</p>
-                            </div>
+                        <div className="h-[calc(100vh-140px)]">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Messages</h2>
+                            <ChatInterface
+                                currentUser={{ role: 'ORGANIZATION', user: { id: localStorage.getItem('userId') } }}
+                                startChatWith={chatUser}
+                            />
                         </div>
                     )}
 

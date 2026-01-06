@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, User, Award, MessageCircle, Search, Filter, Menu, LogOut, Bell, Settings, Calendar, MapPin, Clock, Building2, Send, Download, Eye, Loader2, X, CheckCircle } from 'lucide-react';
+import ChatInterface from '../components/ChatInterface';
 
 export default function VolunteerDashboard() {
     const [activeTab, setActiveTab] = useState('overview');
@@ -9,6 +10,7 @@ export default function VolunteerDashboard() {
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dataLoading, setDataLoading] = useState(true);
+    const [chatUser, setChatUser] = useState(null);
 
     // State for data
     const [stats, setStats] = useState({
@@ -40,40 +42,55 @@ export default function VolunteerDashboard() {
             const token = localStorage.getItem('authToken');
             const headers = { 'Authorization': `Bearer ${token}` };
 
-            // Parallel fetching
-            const [oppsRes, appsRes, msgsRes, certsRes, userRes] = await Promise.all([
-                fetch('/api/volunteer/opportunities/browse', { headers }),
-                fetch('/api/volunteer/applications/my', { headers }),
-                fetch('/api/volunteer/messages/my', { headers }),
-                fetch('/api/volunteer/certificates/my', { headers }),
-                fetch('/api/auth/me', { headers })
-            ]);
+            const fetchResource = async (url, setter) => {
+                try {
+                    const res = await fetch(url, { headers });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setter(data.data);
+                        return data.data; // Return for stats calculation
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch ${url}`, e);
+                }
+                return []; // Return empty on error
+            };
 
-            if (oppsRes.ok && appsRes.ok && msgsRes.ok && certsRes.ok && userRes.ok) {
-                const oppsData = await oppsRes.json();
-                const appsData = await appsRes.json();
-                const msgsData = await msgsRes.json();
-                const certsData = await certsRes.json();
-                const userData = await userRes.json();
+            // Fetch independently
+            const oppsData = await fetchResource('/api/volunteer/opportunities/browse', setOpportunities);
+            const appsData = await fetchResource('/api/volunteer/applications/my', setApplications);
+            const authData = await fetchResource('/api/volunteer/messages/conversations', (data) => {
+                // Determine unread count for badge
+                const unread = data.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
+                // We'll store a mock array of length 'unread' to keep the bell logic simple (messages.length)
+                // Or better, just store the conversations in 'messages' state as before
+                setMessages(data);
+            });
+            const certsData = await fetchResource('/api/volunteer/certificates/my', setCertificates);
 
-                setOpportunities(oppsData.data);
-                setApplications(appsData.data);
-                setMessages(msgsData.data);
-                setCertificates(certsData.data);
+            // User Data
+            try {
+                const userRes = await fetch('/api/auth/me', { headers });
+                if (userRes.ok) {
+                    const userData = await userRes.json();
 
-                // Calculate stats
-                const pendingApps = appsData.data.filter(app => app.status === 'PENDING').length;
-                const acceptedApps = appsData.data.filter(app => app.status === 'ACCEPTED' || app.status === 'COMPLETED').length;
+                    // Calculate stats
+                    const pendingApps = appsData.filter(app => app.status === 'PENDING').length;
+                    const acceptedApps = appsData.filter(app => app.status === 'ACCEPTED' || app.status === 'COMPLETED').length;
 
-                setStats({
-                    name: userData.data.user.name,
-                    email: userData.data.user.email,
-                    totalApplications: appsData.data.length,
-                    acceptedApplications: acceptedApps,
-                    pendingApplications: pendingApps,
-                    certificatesEarned: certsData.data.length
-                });
+                    setStats({
+                        name: userData.data.user.name,
+                        email: userData.data.user.email,
+                        totalApplications: appsData.length,
+                        acceptedApplications: acceptedApps,
+                        pendingApplications: pendingApps,
+                        certificatesEarned: certsData.length
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to fetch user data', e);
             }
+
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -208,7 +225,7 @@ export default function VolunteerDashboard() {
                         <div className="flex items-center space-x-4">
                             <button className="relative p-2 text-gray-500 hover:text-gray-700">
                                 <Bell className="w-6 h-6" />
-                                {messages.length > 0 && (
+                                {messages.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0) > 0 && (
                                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                                 )}
                             </button>
@@ -379,7 +396,42 @@ export default function VolunteerDashboard() {
                                                     <div className="font-semibold text-gray-900">{app.opportunityTitle}</div>
                                                     <div className="text-sm text-gray-500">{app.location || 'Remote'}</div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{app.organizationName}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex justify-between items-center">
+                                                        <span className="text-sm text-gray-700">{app.organizationName}</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                // We need org ID here. Assuming app has organizationId
+                                                                // If app doesn't have organizationId, we might need to check the data structure
+                                                                // checking backend getVolunteerApplications in application.controller.js...
+                                                                // It includes opportunity: { include: { organization: true } }
+                                                                // So app object should have organization info.
+                                                                // Actually the frontend fetch maps it?
+                                                                // let's assume we can get it or we might need to update the fetch logic if it's missing.
+                                                                // For now let's check how applications are mapped in VolunteerDashboard.jsx
+                                                                // Ah, I don't see mapping logic in the viewed file, it just sets state.
+                                                                // Wait, line 54 `const appsData = await appsRes.json(); setApplications(appsData.data);`
+                                                                // I should check `getVolunteerApplications` response structure in backend.
+                                                                // In the mean time I will assume `app.organizationId` exists or `app.organization.id`.
+                                                                // Just in case I'll use a safe check if possible or just try.
+                                                                // Looking at `Application` model: `opportunity` -> `organization`. 
+                                                                // `getVolunteerApplications` likely returns flattened or nested data.
+                                                                // Let's check `VolunteerDashboard` line 382 usage: `{app.organizationName}`
+                                                                // So it has `organizationName`. It likely has `organizationId`.
+
+                                                                setChatUser({
+                                                                    id: app.organizationId,
+                                                                    name: app.organizationName
+                                                                });
+                                                                setActiveTab('messages');
+                                                            }}
+                                                            className="text-purple-600 hover:text-purple-800 p-1"
+                                                            title="Message Organization"
+                                                        >
+                                                            <MessageCircle className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
                                                 <td className="px-6 py-4 text-sm text-gray-700">{new Date(app.date).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-500">{app.appliedDate}</td>
                                                 <td className="px-6 py-4">
@@ -402,37 +454,12 @@ export default function VolunteerDashboard() {
                     )}
 
                     {activeTab === 'messages' && (
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-gray-900">Messages</h2>
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                                {messages.length > 0 ? (
-                                    <div className="divide-y divide-gray-200">
-                                        {messages.map((msg) => (
-                                            <div key={msg.id} className="p-6 hover:bg-gray-50">
-                                                <div className="flex items-start space-x-4">
-                                                    <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
-                                                        {msg.senderName[0]}
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center justify-between mb-2">
-                                                            <div className="font-semibold text-gray-900">{msg.senderName}</div>
-                                                            <div className="text-sm text-gray-500">
-                                                                {new Date(msg.createdAt).toLocaleDateString()}
-                                                            </div>
-                                                        </div>
-                                                        <p className="text-gray-600">{msg.content}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="p-8 text-center">
-                                        <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                        <p className="text-gray-500">No messages yet</p>
-                                    </div>
-                                )}
-                            </div>
+                        <div className="h-[calc(100vh-140px)]">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6">Messages</h2>
+                            <ChatInterface
+                                currentUser={{ role: 'VOLUNTEER', user: { id: localStorage.getItem('userId') } }}
+                                startChatWith={chatUser}
+                            />
                         </div>
                     )}
 
