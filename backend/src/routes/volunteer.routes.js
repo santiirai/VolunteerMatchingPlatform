@@ -2,7 +2,7 @@ import express from 'express';
 import { getAllOpportunities } from '../controllers/opportunity.controller.js';
 import { applyToOpportunity, getVolunteerApplications } from '../controllers/application.controller.js';
 import { getConversations, getMessagesWithUser, sendMessage } from '../controllers/message.controller.js';
-import { getMyCertificates } from '../controllers/certificate.controller.js';
+import { getMyCertificates, downloadCertificate } from '../controllers/certificate.controller.js';
 import { authenticateToken } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
@@ -24,5 +24,6 @@ router.get('/messages/:userId', getMessagesWithUser);
 
 // Certificate Routes
 router.get('/certificates/my', getMyCertificates);
+router.get('/certificates/download/:id', downloadCertificate);
 
 export default router;

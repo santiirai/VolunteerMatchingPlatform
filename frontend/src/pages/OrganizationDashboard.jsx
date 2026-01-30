@@ -25,6 +25,7 @@ export default function OrganizationDashboard() {
     });
     const [opportunities, setOpportunities] = useState([]);
     const [applications, setApplications] = useState([]);
+    const [certificates, setCertificates] = useState([]);
 
     // Forms
     const [opportunityForm, setOpportunityForm] = useState({
@@ -67,6 +68,7 @@ export default function OrganizationDashboard() {
             // Fetch independently
             const oppsData = await fetchResource('/api/opportunities', setOpportunities);
             const appsData = await fetchResource('/api/applications', setApplications);
+            const certsData = await fetchResource('/api/certificates', setCertificates);
 
             // User Data
             try {
@@ -84,7 +86,7 @@ export default function OrganizationDashboard() {
                         totalOpportunities: oppsData.length,
                         activeVolunteers: activeVols,
                         pendingApplications: pendingApps,
-                        certificatesIssued: 0
+                        certificatesIssued: certsData.length
                     });
                 }
             } catch (e) {
@@ -210,6 +212,21 @@ export default function OrganizationDashboard() {
             if (!response.ok) throw new Error('Failed to generate certificate');
 
             const data = await response.json();
+
+            // Update certificates list immediately
+            if (data.certificate) {
+                setCertificates(prev => {
+                    // Check if it already exists to avoid duplicates
+                    if (prev.some(c => c.id === data.certificate.id)) return prev;
+                    return [data.certificate, ...prev];
+                });
+                
+                // Update stats
+                setStats(prev => ({
+                    ...prev,
+                    certificatesIssued: prev.certificatesIssued + 1
+                }));
+            }
 
             window.open(data.certificateUrl, '_blank');
             alert('Certificate generated successfully!');
@@ -557,10 +574,64 @@ export default function OrganizationDashboard() {
 
                     {activeTab === 'certificates' && (
                         <div className="space-y-6">
-                            <h2 className="text-2xl font-bold text-gray-900">Certificates</h2>
-                            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 text-center">
-                                <Award className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500">Generate certificates for completed volunteers from the Applications tab</p>
+                            <h2 className="text-2xl font-bold text-gray-900">Certificates Issued</h2>
+                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-gray-50 border-b border-gray-100">
+                                            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Volunteer</th>
+                                            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Opportunity</th>
+                                            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Issued Date</th>
+                                            <th className="px-6 py-4 text-sm font-semibold text-gray-600">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-100">
+                                        {certificates.length > 0 ? certificates.map((cert) => (
+                                            <tr key={cert.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <div>
+                                                        <div className="font-medium text-gray-900">{cert.volunteerName}</div>
+                                                        <div className="text-sm text-gray-500">{cert.volunteerEmail}</div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-gray-900">{cert.opportunityTitle}</div>
+                                                </td>
+                                                <td className="px-6 py-4 text-gray-500">
+                                                    {new Date(cert.issuedAt).toLocaleDateString()}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <button
+                                                        onClick={() => {
+                                                            const token = localStorage.getItem('authToken');
+                                                            let url = cert.certificateUrl;
+                                                            // Append token for authentication if it's a relative URL
+                                                            if (url && !url.startsWith('http') && token) {
+                                                                const separator = url.includes('?') ? '&' : '?';
+                                                                url = `${url}${separator}token=${token}`;
+                                                            }
+                                                            window.open(url, '_blank');
+                                                        }}
+                                                        className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center space-x-1 w-fit"
+                                                    >
+                                                        <Download className="w-4 h-4" />
+                                                        <span>Download</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                                                    <div className="flex flex-col items-center justify-center">
+                                                        <Award className="w-12 h-12 text-gray-300 mb-3" />
+                                                        <p>No certificates issued yet.</p>
+                                                        <p className="text-sm text-gray-400 mt-1">Generate certificates from the Applications tab.</p>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}

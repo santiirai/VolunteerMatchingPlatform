@@ -79,6 +79,35 @@ export const updateApplicationStatus = async (req, res) => {
             data: { status }
         });
 
+        // Generate Certificate if status is COMPLETED
+        if (status === 'COMPLETED') {
+            const existingCert = await prisma.certificate.findFirst({
+                where: {
+                    userId: application.volunteerId,
+                    opportunityId: application.opportunityId
+                }
+            });
+
+            if (!existingCert) {
+                // Create certificate record
+                const newCert = await prisma.certificate.create({
+                    data: {
+                        userId: application.volunteerId,
+                        opportunityId: application.opportunityId,
+                        certificateUrl: '' // Will be updated
+                    }
+                });
+                
+                // Update with correct download URL
+                await prisma.certificate.update({
+                    where: { id: newCert.id },
+                    data: {
+                        certificateUrl: `/api/volunteer/certificates/download/${newCert.id}`
+                    }
+                });
+            }
+        }
+
         res.status(200).json({
             success: true,
             message: 'Application status updated',

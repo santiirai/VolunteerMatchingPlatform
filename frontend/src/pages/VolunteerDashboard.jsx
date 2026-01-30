@@ -483,7 +483,16 @@ export default function VolunteerDashboard() {
                                                 </div>
                                             </div>
                                             <button
-                                                onClick={() => window.open(cert.certificateUrl, '_blank')}
+                                                onClick={() => {
+                                                    const token = localStorage.getItem('authToken');
+                                                    let url = cert.certificateUrl;
+                                                    // Append token for authentication if it's a relative URL
+                                                    if (url && !url.startsWith('http') && token) {
+                                                        const separator = url.includes('?') ? '&' : '?';
+                                                        url = `${url}${separator}token=${token}`;
+                                                    }
+                                                    window.open(url, '_blank');
+                                                }}
                                                 className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center space-x-2"
                                             >
                                                 <Download className="w-4 h-4" />
