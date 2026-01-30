@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Building2, Users, Award, MessageCircle, Plus, Search, Filter, Menu, X, LogOut, Bell, Settings, Calendar, MapPin, Clock, CheckCircle, XCircle, Download, Send, Eye, Loader2 } from 'lucide-react';
+import { Heart, Building2, Users, Award, MessageCircle, Plus, Search, Filter, Menu, X, LogOut, Bell, Settings, Calendar, MapPin, Clock, CheckCircle, XCircle, Download, Send, Eye, Loader2, Trash2 } from 'lucide-react';
 import ChatInterface from '../components/ChatInterface';
 
 export default function OrganizationDashboard() {
@@ -232,6 +232,37 @@ export default function OrganizationDashboard() {
             alert('Certificate generated successfully!');
         } catch (error) {
             alert('Error generating certificate: ' + error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRevokeCertificate = async (certificateId) => {
+        if (!confirm('Are you sure you want to revoke this certificate? This will also delete the application record.')) return;
+
+        setLoading(true);
+        try {
+            const response = await fetch(`/api/certificates/${certificateId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to revoke certificate');
+
+            // Remove from list
+            setCertificates(prev => prev.filter(c => c.id !== certificateId));
+            
+            // Update stats
+            setStats(prev => ({
+                ...prev,
+                certificatesIssued: Math.max(0, prev.certificatesIssued - 1)
+            }));
+
+            alert('Certificate revoked successfully.');
+        } catch (error) {
+            alert('Error revoking certificate: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -601,22 +632,32 @@ export default function OrganizationDashboard() {
                                                     {new Date(cert.issuedAt).toLocaleDateString()}
                                                 </td>
                                                 <td className="px-6 py-4">
-                                                    <button
-                                                        onClick={() => {
-                                                            const token = localStorage.getItem('authToken');
-                                                            let url = cert.certificateUrl;
-                                                            // Append token for authentication if it's a relative URL
-                                                            if (url && !url.startsWith('http') && token) {
-                                                                const separator = url.includes('?') ? '&' : '?';
-                                                                url = `${url}${separator}token=${token}`;
-                                                            }
-                                                            window.open(url, '_blank');
-                                                        }}
-                                                        className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center space-x-1 w-fit"
-                                                    >
-                                                        <Download className="w-4 h-4" />
-                                                        <span>Download</span>
-                                                    </button>
+                                                    <div className="flex items-center space-x-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const token = localStorage.getItem('authToken');
+                                                                let url = cert.certificateUrl;
+                                                                // Append token for authentication if it's a relative URL
+                                                                if (url && !url.startsWith('http') && token) {
+                                                                    const separator = url.includes('?') ? '&' : '?';
+                                                                    url = `${url}${separator}token=${token}`;
+                                                                }
+                                                                window.open(url, '_blank');
+                                                            }}
+                                                            className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center space-x-1"
+                                                        >
+                                                            <Download className="w-4 h-4" />
+                                                            <span>Download</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleRevokeCertificate(cert.id)}
+                                                            className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors flex items-center space-x-1"
+                                                            title="Revoke Certificate & Delete Application"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                            <span>Cancel</span>
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         )) : (

@@ -433,3 +433,58 @@ export const getOrgCertificates = async (req, res) => {
         });
     }
 };
+
+export const revokeCertificate = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const organizationId = req.user.id;
+
+        // Find certificate and verify ownership (via opportunity -> organization)
+        const certificate = await prisma.certificate.findUnique({
+            where: { id: parseInt(id) },
+            include: {
+                opportunity: true
+            }
+        });
+
+        if (!certificate) {
+            return res.status(404).json({
+                success: false,
+                message: 'Certificate not found'
+            });
+        }
+
+        if (certificate.opportunity.organizationId !== organizationId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to revoke this certificate'
+            });
+        }
+
+        // Delete the certificate
+        await prisma.certificate.delete({
+            where: { id: parseInt(id) }
+        });
+
+        // Delete the associated application
+        // We find it using userId and opportunityId from the certificate
+        await prisma.application.deleteMany({
+            where: {
+                volunteerId: certificate.userId,
+                opportunityId: certificate.opportunityId
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Certificate revoked and application data deleted successfully'
+        });
+    } catch (error) {
+        console.error('Revoke Certificate Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to revoke certificate',
+            error: error.message
+        });
+    }
+};
