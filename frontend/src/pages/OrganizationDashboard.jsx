@@ -7,7 +7,7 @@ export default function OrganizationDashboard() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showMessageModal, setShowMessageModal] = useState(false);
-    const [selectedApplication, setSelectedApplication] = useState(null);
+    const [selectedApplication] = useState(null);
     const [selectedOpportunity, setSelectedOpportunity] = useState(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -93,18 +93,7 @@ export default function OrganizationDashboard() {
                 console.error('Failed to fetch user data', e);
             }
 
-            // Fetch messages for badge (optional internal state)
-            const msgsData = await fetchResource('/api/messages/conversations', (data) => {
-                // calculating unread count could be stored in a ref or state if we add it
-                // For now, let's just use it to toggle the red dot if we add state for it.
-                // But we didn't add state for messages in OrgDashboard yet.
-                // Let's add it or just skip this part to avoid adding state without declaring it.
-            });
-            // Actually, I need to add state for unread count if I want to show it.
-            // Let's skip message fetching for now to avoid breaking state, or adding state.
-            // Given the user didn't ask for it, maybe just stick to robust fetching.
-            // Re-reading my previous thought: "I should apply the same robust fetching pattern".
-            // I will stick to robust fetching only for now to be safe.
+            // (messages fetch omitted in this dashboard to keep state minimal)
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
         } finally {
@@ -280,7 +269,7 @@ export default function OrganizationDashboard() {
 
     if (dataLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="min-h-screen flex items-center justify-center brand-bg">
                 <div className="flex flex-col items-center">
                     <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" />
                     <p className="text-gray-500">Loading dashboard...</p>
@@ -290,9 +279,9 @@ export default function OrganizationDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 fixed h-full z-30`}>
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="min-h-screen brand-bg flex">
+            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} glass transition-all duration-300 fixed h-full z-30`}>
+                <div className="p-4 flex items-center justify-between">
                     {sidebarOpen && (
                         <div className="flex items-center space-x-2">
                             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -346,7 +335,7 @@ export default function OrganizationDashboard() {
             </aside>
 
             <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
-                <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-20">
+                <header className="glass px-8 py-4 sticky top-0 z-20">
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{stats.name}</h1>
@@ -376,7 +365,7 @@ export default function OrganizationDashboard() {
                                 ].map((stat, index) => {
                                     const Icon = stat.icon;
                                     return (
-                                        <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                        <div key={index} className="surface p-6">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-lg flex items-center justify-center`}>
                                                     <Icon className="w-6 h-6 text-white" />
@@ -389,11 +378,11 @@ export default function OrganizationDashboard() {
                                 })}
                             </div>
 
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div className="surface p-6">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Activity</h3>
                                 <div className="space-y-4">
                                     {applications.length > 0 ? applications.slice(0, 3).map((app) => (
-                                        <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div key={app.id} className="flex items-center justify-between p-4 glass">
                                             <div className="flex items-center space-x-4">
                                                 <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
                                                     {app.volunteerName[0]}
@@ -430,7 +419,7 @@ export default function OrganizationDashboard() {
 
                             <div className="grid gap-6">
                                 {opportunities.length > 0 ? opportunities.map((opp) => (
-                                    <div key={opp.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div key={opp.id} className="surface p-6">
                                         <div className="flex items-start justify-between mb-4">
                                             <div>
                                                 <h3 className="text-xl font-bold text-gray-900 mb-2">{opp.title}</h3>
@@ -468,7 +457,7 @@ export default function OrganizationDashboard() {
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="text-center py-10 bg-white rounded-xl border border-gray-200">
+                                    <div className="text-center py-10 surface">
                                         <p className="text-gray-500">No opportunities created yet.</p>
                                     </div>
                                 )}
@@ -495,7 +484,7 @@ export default function OrganizationDashboard() {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="surface overflow-hidden">
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>
@@ -606,7 +595,7 @@ export default function OrganizationDashboard() {
                     {activeTab === 'certificates' && (
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold text-gray-900">Certificates Issued</h2>
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="surface overflow-hidden">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-gray-50 border-b border-gray-100">

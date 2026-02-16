@@ -121,9 +121,9 @@ export default function RoleBasedSignup() {
 
       // Redirect based on role
       if (data.data?.user?.role === 'VOLUNTEER') {
-        window.location.href = '/volunteer/dashboard';
+        window.location.href = '/volunteer-dashboard';
       } else if (data.data?.user?.role === 'ORGANIZATION') {
-        window.location.href = '/organization/dashboard';
+        window.location.href = '/organization-dashboard';
       }
 
     } catch (err) {

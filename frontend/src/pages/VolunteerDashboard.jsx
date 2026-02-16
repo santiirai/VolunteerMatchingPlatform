@@ -57,13 +57,9 @@ export default function VolunteerDashboard() {
             };
 
             // Fetch independently
-            const oppsData = await fetchResource('/api/volunteer/opportunities/browse', setOpportunities);
+            await fetchResource('/api/volunteer/opportunities/browse', setOpportunities);
             const appsData = await fetchResource('/api/volunteer/applications/my', setApplications);
-            const authData = await fetchResource('/api/volunteer/messages/conversations', (data) => {
-                // Determine unread count for badge
-                const unread = data.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
-                // We'll store a mock array of length 'unread' to keep the bell logic simple (messages.length)
-                // Or better, just store the conversations in 'messages' state as before
+            await fetchResource('/api/volunteer/messages/conversations', (data) => {
                 setMessages(data);
             });
             const certsData = await fetchResource('/api/volunteer/certificates/my', setCertificates);
@@ -147,7 +143,7 @@ export default function VolunteerDashboard() {
 
     if (dataLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="min-h-screen flex items-center justify-center brand-bg">
                 <div className="flex flex-col items-center">
                     <Loader2 className="w-12 h-12 text-purple-600 animate-spin mb-4" />
                     <p className="text-gray-500">Loading dashboard...</p>
@@ -157,9 +153,9 @@ export default function VolunteerDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex">
-            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 fixed h-full z-30`}>
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+        <div className="min-h-screen brand-bg flex">
+            <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} glass transition-all duration-300 fixed h-full z-30`}>
+                <div className="p-4 flex items-center justify-between">
                     {sidebarOpen && (
                         <div className="flex items-center space-x-2">
                             <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
@@ -216,7 +212,7 @@ export default function VolunteerDashboard() {
             </aside>
 
             <main className={`flex-1 ${sidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
-                <header className="bg-white border-b border-gray-200 px-8 py-4 sticky top-0 z-20">
+                <header className="glass px-8 py-4 sticky top-0 z-20">
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{stats.name}</h1>
@@ -248,7 +244,7 @@ export default function VolunteerDashboard() {
                                 ].map((stat, index) => {
                                     const Icon = stat.icon;
                                     return (
-                                        <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                        <div key={index} className="surface p-6">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-lg flex items-center justify-center`}>
                                                     <Icon className="w-6 h-6 text-white" />
@@ -261,11 +257,11 @@ export default function VolunteerDashboard() {
                                 })}
                             </div>
 
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div className="surface p-6">
                                 <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Applications</h3>
                                 <div className="space-y-4">
                                     {applications.length > 0 ? applications.slice(0, 3).map((app) => (
-                                        <div key={app.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                        <div key={app.id} className="flex items-center justify-between p-4 glass">
                                             <div className="flex items-center space-x-4">
                                                 <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
                                                     {app.organizationName[0]}
@@ -308,7 +304,7 @@ export default function VolunteerDashboard() {
 
                             <div className="grid gap-6">
                                 {opportunities.length > 0 ? opportunities.map((opp) => (
-                                    <div key={opp.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                    <div key={opp.id} className="surface p-6">
                                         <div className="flex items-start justify-between mb-4">
                                             <div>
                                                 <h3 className="text-xl font-bold text-gray-900 mb-2">{opp.title}</h3>
@@ -366,7 +362,7 @@ export default function VolunteerDashboard() {
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="text-center py-10 bg-white rounded-xl border border-gray-200">
+                                    <div className="text-center py-10 surface">
                                         <p className="text-gray-500">No opportunities available at the moment.</p>
                                     </div>
                                 )}
@@ -378,7 +374,7 @@ export default function VolunteerDashboard() {
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold text-gray-900">My Applications</h2>
 
-                            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="surface overflow-hidden">
                                 <table className="w-full">
                                     <thead className="bg-gray-50 border-b border-gray-200">
                                         <tr>

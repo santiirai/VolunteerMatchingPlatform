@@ -137,10 +137,10 @@ export default function ChatInterface({ currentUser, startChatWith }) {
     }
 
     return (
-        <div className="flex h-[calc(100vh-200px)] min-h-[500px] bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex h-[calc(100vh-200px)] min-h-[500px] surface overflow-hidden">
             {/* Sidebar - Conversations */}
-            <div className={`w-full md:w-80 border-r border-gray-200 bg-gray-50 flex flex-col ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
-                <div className="p-4 border-b border-gray-200">
+            <div className={`w-full md:w-80 glass flex flex-col ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
+                <div className="p-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
@@ -193,11 +193,11 @@ export default function ChatInterface({ currentUser, startChatWith }) {
             </div>
 
             {/* Main Chat Area */}
-            <div className={`flex-1 flex flex-col bg-white ${!selectedUser ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`flex-1 flex flex-col surface ${!selectedUser ? 'hidden md:flex' : 'flex'}`}>
                 {selectedUser ? (
                     <>
                         {/* Chat Header */}
-                        <div className="p-4 border-b border-gray-200 flex items-center justify-between shadow-sm z-10">
+                        <div className="p-4 glass flex items-center justify-between z-10">
                             <div className="flex items-center space-x-3">
                                 <button
                                     onClick={() => setSelectedUser(null)}
@@ -227,8 +227,7 @@ export default function ChatInterface({ currentUser, startChatWith }) {
 
                         {/* Messages List */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50/50">
-                            {messages.map((msg, index) => {
-                                const isMe = msg.senderId === currentUser.id; // Or we can rely on senderId
+                            {messages.map((msg) => {
                                 const isSenderMe = msg.sender.id === currentUser.user?.id || msg.sender.id === parseInt(localStorage.getItem('userId')); // Careful with types
 
                                 return (
@@ -249,7 +248,7 @@ export default function ChatInterface({ currentUser, startChatWith }) {
                         </div>
 
                         {/* Input Area */}
-                        <div className="p-4 border-t border-gray-200 bg-white">
+                        <div className="p-4 glass">
                             <form onSubmit={handleSendMessage} className="flex space-x-2">
                                 <input
                                     type="text"

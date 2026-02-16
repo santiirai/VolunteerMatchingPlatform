@@ -63,7 +63,7 @@ export default function LandingPage() {
     ];
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen brand-bg">
             {/* Navigation */}
             <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-sm shadow-sm z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -73,7 +73,7 @@ export default function LandingPage() {
                                 <Heart className="w-6 h-6 text-white" />
                             </div>
                             <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
-                                VolunteerHub
+                                Volunify
                             </span>
                         </div>
 
@@ -117,12 +117,12 @@ export default function LandingPage() {
             </nav>
 
             {/* Hero Section */}
-            <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-50 via-pink-50 to-white">
+            <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
-                    <div className="text-center space-y-8">
+                    <div className="text-center space-y-8 surface p-10">
                         <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight">
                             Connect Volunteers with
-                            <span className="block bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                            <span className="block stat-number">
                                 Meaningful Opportunities
                             </span>
                         </h1>
@@ -132,12 +132,12 @@ export default function LandingPage() {
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <Link to="/signup" className="group bg-gradient-to-r from-pink-500 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-2">
+                            <Link to="/signup" className="group brand-button px-8 py-4 font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center space-x-2">
                                 <Heart className="w-5 h-5" />
                                 <span>Join as Volunteer</span>
                                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
-                            <Link to="/signup" className="group bg-white text-purple-600 border-2 border-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:bg-purple-50 transition-all duration-200 flex items-center space-x-2">
+                            <Link to="/signup" className="group outline-button px-8 py-4 font-semibold text-lg transition-all duration-200 flex items-center space-x-2">
                                 <Building2 className="w-5 h-5" />
                                 <span>Register Organization</span>
                             </Link>
@@ -147,7 +147,7 @@ export default function LandingPage() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 pt-16">
                             {stats.map((stat, index) => (
                                 <div key={index} className="text-center">
-                                    <div className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
+                                    <div className="text-3xl md:text-4xl font-bold stat-number">
                                         {stat.number}
                                     </div>
                                     <div className="text-gray-600 mt-2">{stat.label}</div>
@@ -176,9 +176,9 @@ export default function LandingPage() {
                             return (
                                 <div
                                     key={index}
-                                    className="group p-6 rounded-xl border-2 border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105"
+                                    className="group p-6 surface hover:shadow-xl transition-all duration-300 hover:scale-105"
                                 >
-                                    <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <div className="w-12 h-12 brand-button rounded-md flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                                         <Icon className="w-6 h-6 text-white" />
                                     </div>
                                     <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
@@ -191,7 +191,7 @@ export default function LandingPage() {
             </section>
 
             {/* How It Works Section */}
-            <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-50 to-pink-50">
+            <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -205,7 +205,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {howItWorks.map((item, index) => (
                             <div key={index} className="relative">
-                                <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+                                <div className="surface p-6 hover:shadow-xl transition-shadow">
                                     <div className={`w-12 h-12 ${item.color} rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4`}>
                                         {item.step}
                                     </div>
@@ -228,7 +228,7 @@ export default function LandingPage() {
                 <div className="max-w-7xl mx-auto">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="space-y-6">
-                            <div className="inline-flex items-center space-x-2 bg-purple-100 text-purple-700 px-4 py-2 rounded-full">
+                            <div className="inline-flex items-center space-x-2 brand-badge px-4 py-2 rounded-full">
                                 <Building2 className="w-5 h-5" />
                                 <span className="font-semibold">For Organizations</span>
                             </div>
@@ -257,13 +257,13 @@ export default function LandingPage() {
                                     <span className="text-gray-700">Issue certificates to volunteers</span>
                                 </li>
                             </ul>
-                            <Link to="/signup" className="inline-block bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                            <Link to="/signup" className="inline-block brand-button px-8 py-4 font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
                                 Register Your Organization
                             </Link>
                         </div>
                         <div className="relative">
-                            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-8 h-96 flex items-center justify-center">
-                                <Building2 className="w-48 h-48 text-indigo-300" />
+                            <div className="glass rounded-2xl p-8 h-96 flex items-center justify-center">
+                                <Building2 className="w-48 h-48 text-indigo-400" />
                             </div>
                         </div>
                     </div>
@@ -271,16 +271,16 @@ export default function LandingPage() {
             </section>
 
             {/* For Volunteers Section */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-pink-50 to-purple-50">
+            <section className="py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="relative order-2 md:order-1">
-                            <div className="bg-gradient-to-br from-pink-100 to-rose-100 rounded-2xl p-8 h-96 flex items-center justify-center">
-                                <Heart className="w-48 h-48 text-rose-300" />
+                            <div className="glass rounded-2xl p-8 h-96 flex items-center justify-center">
+                                <Heart className="w-48 h-48 text-pink-400" />
                             </div>
                         </div>
                         <div className="space-y-6 order-1 md:order-2">
-                            <div className="inline-flex items-center space-x-2 bg-pink-100 text-pink-700 px-4 py-2 rounded-full">
+                            <div className="inline-flex items-center space-x-2 brand-badge px-4 py-2 rounded-full">
                                 <Heart className="w-5 h-5" />
                                 <span className="font-semibold">For Volunteers</span>
                             </div>
@@ -309,7 +309,7 @@ export default function LandingPage() {
                                     <span className="text-gray-700">Download certificates after completion</span>
                                 </li>
                             </ul>
-                            <Link to="/signup" className="inline-block bg-gradient-to-r from-pink-500 to-rose-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                            <Link to="/signup" className="inline-block brand-button px-8 py-4 font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
                                 Start Volunteering Today
                             </Link>
                         </div>
@@ -318,19 +318,19 @@ export default function LandingPage() {
             </section>
 
             {/* CTA Section */}
-            <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-600">
+            <section className="py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center space-y-8">
                     <h2 className="text-4xl md:text-5xl font-bold text-white">
                         Ready to Make a Difference?
                     </h2>
-                    <p className="text-xl text-white/90">
+                    <p className="text-xl text-gray-700">
                         Join thousands of volunteers and organizations creating positive change in communities.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link to="/signup" className="bg-white text-purple-600 px-8 py-4 rounded-lg font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
+                        <Link to="/signup" className="outline-button px-8 py-4 font-semibold text-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200">
                             Sign Up Now
                         </Link>
-                        <button className="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-white/10 transition-all duration-200">
+                        <button className="outline-button px-8 py-4 font-semibold text-lg hover:bg-purple-50 transition-all duration-200">
                             Learn More
                         </button>
                     </div>
@@ -346,7 +346,7 @@ export default function LandingPage() {
                                 <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center">
                                     <Heart className="w-6 h-6 text-white" />
                                 </div>
-                                <span className="text-xl font-bold">VolunteerHub</span>
+                                <span className="text-xl font-bold">Volunify</span>
                             </div>
                             <p className="text-gray-400">
                                 Connecting volunteers with meaningful opportunities to create positive change.
@@ -378,7 +378,7 @@ export default function LandingPage() {
                         </div>
                     </div>
                     <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-                        <p>&copy; 2025 VolunteerHub. All rights reserved.</p>
+                        <p>&copy; 2025 Volunify. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
