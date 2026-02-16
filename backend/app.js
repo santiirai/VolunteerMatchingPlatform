@@ -2,6 +2,7 @@ import express from 'express';
 import 'dotenv/config';
 import routes from './src/routes/index.route.js';
 import { requestLogger } from './src/middleware/logger.middleware.js';
+import path from 'path';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,6 +33,9 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api', routes);
+
+// Static file serving for uploads
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Root endpoint
 app.get('/', (req, res) => {

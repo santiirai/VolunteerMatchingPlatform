@@ -74,12 +74,34 @@ export const getOrgOpportunities = async (req, res) => {
 
 export const getAllOpportunities = async (req, res) => {
     try {
+        const { category, q } = req.query;
+        const now = new Date();
+        const where = {
+            date: { gte: now }
+        };
+
+        if (category) {
+            const c = String(category).trim();
+            // Filter by presence in title/description/requiredSkills (case-insensitive)
+            where.OR = [
+                { title: { contains: c, mode: 'insensitive' } },
+                { description: { contains: c, mode: 'insensitive' } },
+                { requiredSkills: { contains: c, mode: 'insensitive' } }
+            ];
+        }
+
+        if (q) {
+            const s = String(q).trim();
+            where.OR = [
+                ...(where.OR || []),
+                { title: { contains: s, mode: 'insensitive' } },
+                { description: { contains: s, mode: 'insensitive' } },
+                { requiredSkills: { contains: s, mode: 'insensitive' } }
+            ];
+        }
+
         const opportunities = await prisma.opportunity.findMany({
-            where: {
-                date: {
-                    gte: new Date() // Only show future opportunities
-                }
-            },
+            where,
             include: {
                 organization: {
                     select: {

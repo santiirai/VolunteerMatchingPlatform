@@ -1,5 +1,7 @@
 import { prisma } from '../libs/prisma.js';
 import { generateToken } from '../utils/jwt.util.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 /**
  * User Signup Controller
@@ -32,13 +34,16 @@ export const signup = async (req, res) => {
       });
     }
 
-    // Create user (password stored as plain text as requested)
+    // Hash password
+    console.log('[Auth Controller] Hashing password for new user:', email);
+    const hashed = await bcrypt.hash(password, 10);
+
     console.log('[Auth Controller] Creating new user:', email);
     const user = await prisma.user.create({
       data: {
         name,
         email: email.trim(),
-        password, // Plain text password as requested
+        password: hashed,
         role: role || 'VOLUNTEER',
         skills,
         location
@@ -109,9 +114,26 @@ export const login = async (req, res) => {
       });
     }
 
-    // Check password (plain text comparison as requested)
+    // Verify password with bcrypt, and migrate legacy plaintext if needed
     console.log('[Auth Controller] Verifying password');
-    if (user.password !== password) {
+    let valid = false;
+    try {
+      valid = await bcrypt.compare(password, user.password);
+    } catch (e) {
+      valid = false;
+    }
+    if (!valid) {
+      if (user.password === password) {
+        console.log('[Auth Controller] Legacy plaintext password detected, migrating to hashed');
+        const newHash = await bcrypt.hash(password, 10);
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { password: newHash }
+        });
+        valid = true;
+      }
+    }
+    if (!valid) {
       console.log('[Auth Controller] Invalid password for user:', email);
       return res.status(401).json({
         success: false,
@@ -164,6 +186,9 @@ export const getCurrentUser = async (req, res) => {
         id: true,
         name: true,
         email: true,
+        role: true,
+        skills: true,
+        location: true,
         createdAt: true,
         updatedAt: true
       }
@@ -192,4 +217,100 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
+/**
+ * Forgot Password - issue a reset token
+ */
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+    const user = await prisma.user.findUnique({ where: { email: email.trim() } });
+    if (!user) {
+      return res.status(200).json({ success: true, message: 'If the email exists, a reset has been issued' });
+    }
+    const token = jwt.sign({ id: user.id, email: user.email, purpose: 'password_reset' }, process.env.JWT_SECRET || 'your-secret-key-change-in-production', { expiresIn: '30m' });
+    res.status(200).json({
+      success: true,
+      message: 'Password reset token generated',
+      data: { resetToken: token, expiresInMinutes: 30 }
+    });
+  } catch (error) {
+    console.error('[Auth Controller] Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
+/**
+ * Reset Password - use token to set new password
+ */
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ success: false, message: 'Token and new password are required' });
+    }
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key-change-in-production');
+    } catch (e) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired token' });
+    }
+    if (decoded.purpose !== 'password_reset') {
+      return res.status(400).json({ success: false, message: 'Invalid token purpose' });
+    }
+    const hashed = await bcrypt.hash(password, 10);
+    await prisma.user.update({
+      where: { id: decoded.id },
+      data: { password: hashed }
+    });
+    res.status(200).json({ success: true, message: 'Password reset successful' });
+  } catch (error) {
+    console.error('[Auth Controller] Reset password error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
+
+/**
+ * Change Password - authenticated users
+ */
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current and new passwords are required' });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    let valid = false;
+    try {
+      valid = await bcrypt.compare(currentPassword, user.password);
+    } catch (e) {
+      valid = false;
+    }
+    if (!valid && user.password === currentPassword) {
+      valid = true;
+    }
+    if (!valid) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashed }
+    });
+
+    res.status(200).json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('[Auth Controller] Change password error:', error);
+    res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+  }
+};
 

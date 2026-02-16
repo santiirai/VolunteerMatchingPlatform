@@ -13,6 +13,11 @@ export default function OrganizationDashboard() {
     const [loading, setLoading] = useState(false);
     const [dataLoading, setDataLoading] = useState(true);
     const [chatUser, setChatUser] = useState(null);
+    const [profile, setProfile] = useState({ name: '', skills: '', location: '', profileImageUrl: '' });
+    const [profileImageFile, setProfileImageFile] = useState(null);
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
     // State for data
     const [stats, setStats] = useState({
@@ -44,6 +49,48 @@ export default function OrganizationDashboard() {
     useEffect(() => {
         fetchDashboardData();
     }, []);
+    useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const token = localStorage.getItem('authToken');
+                const res = await fetch('/api/profile/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    setProfile({
+                        name: data.data.name || '',
+                        skills: data.data.skills || '',
+                        location: data.data.location || '',
+                        profileImageUrl: data.data.profileImageUrl || ''
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to fetch profile', e);
+            }
+        };
+        fetchProfile();
+    }, []);
+
+    const handleProfileSave = async () => {
+        try {
+            const token = localStorage.getItem('authToken');
+            const form = new FormData();
+            form.append('name', profile.name);
+            form.append('skills', profile.skills);
+            form.append('location', profile.location);
+            if (profileImageFile) form.append('image', profileImageFile);
+            const res = await fetch('/api/profile', {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: form
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || 'Failed to update profile');
+            setProfile(p => ({ ...p, profileImageUrl: data.data.profileImageUrl || p.profileImageUrl }));
+            alert('Profile updated');
+        } catch (e) {
+            alert(e.message);
+        }
+    };
 
     const fetchDashboardData = async () => {
         setDataLoading(true);
@@ -78,7 +125,8 @@ export default function OrganizationDashboard() {
 
                     // Calculate stats
                     const pendingApps = appsData.filter(app => app.status === 'PENDING').length;
-                    const activeVols = new Set(appsData.filter(app => app.status === 'ACCEPTED').map(app => app.volunteerId)).size;
+                    const acceptedApps = appsData.filter(app => app.status === 'ACCEPTED' || app.status === 'COMPLETED').length;
+                    const activeVols = new Set(appsData.filter(app => app.status === 'ACCEPTED' || app.status === 'COMPLETED').map(app => app.volunteerId)).size;
 
                     setStats({
                         name: userData.data.user.name,
@@ -86,7 +134,8 @@ export default function OrganizationDashboard() {
                         totalOpportunities: oppsData.length,
                         activeVolunteers: activeVols,
                         pendingApplications: pendingApps,
-                        certificatesIssued: certsData.length
+                        certificatesIssued: certsData.length,
+                        acceptedApplications: acceptedApps
                     });
                 }
             } catch (e) {
@@ -284,12 +333,20 @@ export default function OrganizationDashboard() {
                 <div className="p-4 flex items-center justify-between">
                     {sidebarOpen && (
                         <div className="flex items-center space-x-2">
-                            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                <Building2 className="w-6 h-6 text-white" />
-                            </div>
+                            {profile.profileImageUrl ? (
+                                <img
+                                    src={profile.profileImageUrl}
+                                    alt="Profile"
+                                    className="w-10 h-10 rounded-lg object-cover"
+                                    onError={(e) => { e.currentTarget.src = 'https://dummyimage.com/80x80/eeeeee/aaaaaa.png&text=Image'; }}
+                                />
+                            ) : (
+                                <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
+                                    {(profile.name || stats.name || 'U')[0]}
+                                </div>
+                            )}
                             <div>
-                                <div className="font-bold text-gray-900 text-sm">ConnectGood</div>
-                                <div className="text-xs text-gray-500">Organization</div>
+                                <div className="font-bold text-gray-900 text-sm">{profile.name || stats.name || 'User'}</div>
                             </div>
                         </div>
                     )}
@@ -304,7 +361,8 @@ export default function OrganizationDashboard() {
                         { id: 'opportunities', icon: Heart, label: 'Opportunities' },
                         { id: 'applications', icon: Users, label: 'Applications' },
                         { id: 'messages', icon: MessageCircle, label: 'Messages' },
-                        { id: 'certificates', icon: Award, label: 'Certificates' }
+                        { id: 'certificates', icon: Award, label: 'Certificates' },
+                        { id: 'profile', icon: Settings, label: 'Profile' }
                     ].map((item) => {
                         const Icon = item.icon;
                         return (
@@ -359,7 +417,7 @@ export default function OrganizationDashboard() {
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 {[
                                     { label: 'Total Opportunities', value: stats.totalOpportunities, icon: Heart, color: 'from-pink-500 to-rose-600' },
-                                    { label: 'Active Volunteers', value: stats.activeVolunteers, icon: Users, color: 'from-blue-500 to-cyan-600' },
+                                    { label: 'Accepted Applications', value: stats.acceptedApplications || 0, icon: CheckCircle, color: 'from-green-500 to-emerald-600' },
                                     { label: 'Pending Applications', value: stats.pendingApplications, icon: Clock, color: 'from-yellow-500 to-orange-600' },
                                     { label: 'Certificates Issued', value: stats.certificatesIssued, icon: Award, color: 'from-purple-500 to-indigo-600' }
                                 ].map((stat, index) => {
@@ -461,6 +519,107 @@ export default function OrganizationDashboard() {
                                         <p className="text-gray-500">No opportunities created yet.</p>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'profile' && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-gray-900">Manage Profile</h2>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                <div className="flex items-start space-x-6">
+                                    <div className="w-24 h-24 rounded-lg bg-gray-100 overflow-hidden">
+                                        {profile.profileImageUrl ? (
+                                            <img
+                                                src={profile.profileImageUrl}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => { e.currentTarget.src = 'https://dummyimage.com/96x96/eeeeee/aaaaaa.png&text=Image'; }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400">No Image</div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-sm text-gray-600">Organization Name</label>
+                                            <input
+                                                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
+                                                value={profile.name}
+                                                onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Preferred Skills</label>
+                                            <input
+                                                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
+                                                value={profile.skills}
+                                                onChange={(e) => setProfile(p => ({ ...p, skills: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Location</label>
+                                            <input
+                                                className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
+                                                value={profile.location}
+                                                onChange={(e) => setProfile(p => ({ ...p, location: e.target.value }))}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-sm text-gray-600">Profile Image</label>
+                                            <input type="file" accept="image/*" onChange={(e) => setProfileImageFile(e.target.files?.[0] || null)} />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-6">
+                                    <button onClick={handleProfileSave} className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg">
+                                        Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Change Password</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="text-sm text-gray-600">Current Password</label>
+                                        <input type="password" className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-gray-600">New Password</label>
+                                        <input type="password" className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <label className="text-sm text-gray-600">Confirm New Password</label>
+                                        <input type="password" className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                                    </div>
+                                </div>
+                                <div className="mt-4">
+                                    <button
+                                        onClick={async () => {
+                                            if (!currentPassword || !newPassword || !confirmPassword) { alert('Fill all fields'); return; }
+                                            if (newPassword !== confirmPassword) { alert('Passwords do not match'); return; }
+                                            try {
+                                                const res = await fetch('/api/auth/change-password', {
+                                                    method: 'POST',
+                                                    headers: {
+                                                        'Content-Type': 'application/json',
+                                                        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                                                    },
+                                                    body: JSON.stringify({ currentPassword, newPassword })
+                                                });
+                                                const data = await res.json();
+                                                if (!res.ok) throw new Error(data.message || 'Failed to change password');
+                                                alert('Password changed successfully');
+                                                setCurrentPassword(''); setNewPassword(''); setConfirmPassword('');
+                                            } catch (e) {
+                                                alert(e.message);
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg"
+                                    >
+                                        Update Password
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     )}

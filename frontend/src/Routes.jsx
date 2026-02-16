@@ -14,6 +14,8 @@ export default function AppRoutes() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/organization-dashboard" element={<OrganizationDashboard />} />
             <Route path="/volunteer-dashboard" element={<VolunteerDashboard />} />
+            <Route path="/organization/dashboard" element={<OrganizationDashboard />} />
+            <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
         </Routes>
     )
 }
