@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Heart, User, Award, MessageCircle, Search, Filter, Menu, LogOut, Bell, Settings, Calendar, MapPin, Clock, Building2, Send, Download, Eye, Loader2, X, CheckCircle } from 'lucide-react';
+import OpportunityCard from '../components/OpportunityCard';
 import ChatInterface from '../components/ChatInterface';
 
 export default function VolunteerDashboard() {
@@ -461,63 +462,24 @@ export default function VolunteerDashboard() {
 
                             <div className="grid gap-6">
                                 {opportunities.length > 0 ? opportunities.map((opp) => (
-                                    <div key={opp.id} className="surface p-6">
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div>
-                                                <h3 className="text-xl font-bold text-gray-900 mb-2">{opp.title}</h3>
-                                                <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
-                                                    <div className="flex items-center space-x-1">
-                                                        <Building2 className="w-4 h-4" />
-                                                        <span>{opp.organizationName}</span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-1">
-                                                        <MapPin className="w-4 h-4" />
-                                                        <span>{opp.location || 'Remote'}</span>
-                                                    </div>
-                                                    <div className="flex items-center space-x-1">
-                                                        <Calendar className="w-4 h-4" />
-                                                        <span>{new Date(opp.date).toLocaleDateString()}</span>
-                                                    </div>
-                                                </div>
-                                                <p className="text-gray-600 line-clamp-2">{opp.description}</p>
-                                            </div>
-                                            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                                                Active
-                                            </span>
-                                        </div>
-                                        <div className="flex space-x-3">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedOpportunity(opp);
-                                                    setShowDetailsModal(true);
-                                                }}
-                                                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
-                                            >
-                                                <Eye className="w-4 h-4" />
-                                                <span>View Details</span>
-                                            </button>
-                                            {hasApplied(opp.id) ? (
-                                                <button
-                                                    disabled
-                                                    className="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed flex items-center space-x-2"
-                                                >
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    <span>Applied</span>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedOpportunity(opp);
-                                                        setShowApplyModal(true);
-                                                    }}
-                                                    className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center space-x-2"
-                                                >
-                                                    <Send className="w-4 h-4" />
-                                                    <span>Apply Now</span>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
+                                    <OpportunityCard
+                                        key={opp.id}
+                                        opportunity={opp}
+                                        volunteersNeeded={10}
+                                        amountRaised={opp.amountRaised || 0}
+                                        targetAmount={opp.targetAmount || 0}
+                                        donors={opp.donors || []}
+                                        hasApplied={hasApplied(opp.id)}
+                                        onView={() => {
+                                            setSelectedOpportunity(opp);
+                                            setShowDetailsModal(true);
+                                        }}
+                                        onJoin={() => {
+                                            if (hasApplied(opp.id)) return;
+                                            setSelectedOpportunity(opp);
+                                            setShowApplyModal(true);
+                                        }}
+                                    />
                                 )) : (
                                     <div className="text-center py-10 surface">
                                         <p className="text-gray-500">No opportunities available at the moment.</p>

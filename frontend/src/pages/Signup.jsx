@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, MapPin, Briefcase, Heart, Building2, Check, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function RoleBasedSignup() {
@@ -372,10 +373,13 @@ export default function RoleBasedSignup() {
 
           {/* Sign In Link */}
           <div className="text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <button className="text-purple-600 font-semibold hover:underline disabled:cursor-not-allowed" disabled={loading}>
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-purple-600 font-semibold hover:underline"
+            >
               Sign in
-            </button>
+            </Link>
           </div>
         </div>
       </div>
