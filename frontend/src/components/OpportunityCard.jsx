@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, MapPin, Users, HeartHandshake, X } from 'lucide-react';
+import { Calendar, MapPin, Users, HeartHandshake, X, Send } from 'lucide-react';
 
 export default function OpportunityCard({
   opportunity,
@@ -72,8 +72,8 @@ export default function OpportunityCard({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow flex flex-col gap-5">
-      <div className="flex items-start justify-between">
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden p-6 flex flex-col gap-5">
+        <div className="flex items-start justify-between">
         <div className="pr-4">
           <button
             type="button"
@@ -81,7 +81,7 @@ export default function OpportunityCard({
             className="text-left"
             title="View details"
           >
-            <h3 className="text-xl font-extrabold text-gray-900 tracking-tight hover:text-purple-700 transition-colors">
+            <h3 className="text-xl font-extrabold text-gray-900 tracking-tight hover:text-purple-700 transition-colors line-clamp-2">
               {opportunity?.title}
             </h3>
           </button>
@@ -99,7 +99,7 @@ export default function OpportunityCard({
               <span>{joined}/{needed} volunteers</span>
             </div>
             {opportunity?.organizationName && (
-              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
                 {opportunity.organizationName}
               </span>
             )}
@@ -110,54 +110,57 @@ export default function OpportunityCard({
         </span>
       </div>
 
-      <p className="text-gray-700 leading-relaxed">
-        {opportunity?.description}
-      </p>
+        <p className="text-gray-700 leading-relaxed line-clamp-2">
+          {opportunity?.description}
+        </p>
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
+        <div className="h-px bg-gray-100" />
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Raised</span>
           <span className="font-semibold text-gray-900">NPR {amountRaised.toLocaleString()} / {targetAmount.toLocaleString()}</span>
         </div>
-        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-pink-500 to-purple-600" style={{ width: `${progress}%` }} />
         </div>
-        {donors && donors.length > 0 && (
-          <div className="text-xs text-gray-500">
+          {donors && donors.length > 0 && (
+            <div className="text-xs text-gray-500">
             Recent donors: {donors.slice(0, 3).map((d) => d.name).join(', ')}{donors.length > 3 ? '…' : ''}
           </div>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        {!hasApplied ? (
-        <button
-          type="button"
-          onClick={onJoin}
-          className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
-        >
-          Join as Volunteer
-        </button>
-        ) : (
+        <div className="flex flex-col sm:flex-row gap-3">
+          {!hasApplied ? (
+            <button
+              type="button"
+              onClick={onJoin}
+              className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all inline-flex items-center justify-center gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Join as Volunteer
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="flex-1 bg-gray-200 text-gray-600 px-4 py-3 rounded-lg font-semibold cursor-not-allowed inline-flex items-center justify-center"
+              title="Already applied"
+            >
+              Already Applied
+            </button>
+          )}
           <button
             type="button"
-            disabled
-            className="flex-1 bg-gray-200 text-gray-600 px-4 py-3 rounded-lg font-semibold cursor-not-allowed"
-            title="Already applied"
+            onClick={() => setShowDonate(true)}
+            className="flex-1 border border-emerald-300 text-emerald-700 bg-white px-4 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
+            title="Donate via Khalti"
           >
-            Already Applied
+            <HeartHandshake className="w-4 h-4" />
+            Donate to this Opportunity
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setShowDonate(true)}
-          className="flex-1 bg-emerald-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-all flex items-center justify-center gap-2"
-          title="Donate via Khalti"
-        >
-          <HeartHandshake className="w-4 h-4" />
-          Donate to this Opportunity
-        </button>
-      </div>
+        </div>
 
       {showDonate && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">

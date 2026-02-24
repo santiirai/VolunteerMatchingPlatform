@@ -82,11 +82,11 @@ export const getAllOpportunities = async (req, res) => {
 
         if (category) {
             const c = String(category).trim();
-            // Filter by presence in title/description/requiredSkills (case-insensitive)
+            // Basic contains filters; case sensitivity depends on DB collation
             where.OR = [
-                { title: { contains: c, mode: 'insensitive' } },
-                { description: { contains: c, mode: 'insensitive' } },
-                { requiredSkills: { contains: c, mode: 'insensitive' } }
+                { title: { contains: c } },
+                { description: { contains: c } },
+                { requiredSkills: { contains: c } }
             ];
         }
 
@@ -94,9 +94,9 @@ export const getAllOpportunities = async (req, res) => {
             const s = String(q).trim();
             where.OR = [
                 ...(where.OR || []),
-                { title: { contains: s, mode: 'insensitive' } },
-                { description: { contains: s, mode: 'insensitive' } },
-                { requiredSkills: { contains: s, mode: 'insensitive' } }
+                { title: { contains: s } },
+                { description: { contains: s } },
+                { requiredSkills: { contains: s } }
             ];
         }
 

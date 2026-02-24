@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, User, Award, MessageCircle, Search, Filter, Menu, LogOut, Bell, Settings, Calendar, MapPin, Clock, Building2, Send, Download, Eye, Loader2, X, CheckCircle } from 'lucide-react';
+import { Heart, User, Award, MessageCircle, Search, Menu, LogOut, Bell, Settings, Calendar, MapPin, Clock, Building2, Send, Download, Eye, Loader2, X, CheckCircle } from 'lucide-react';
 import OpportunityCard from '../components/OpportunityCard';
 import ChatInterface from '../components/ChatInterface';
 
@@ -28,9 +28,12 @@ export default function VolunteerDashboard() {
     const [certificates, setCertificates] = useState([]);
     const [profile, setProfile] = useState({ name: '', skills: '', location: '', profileImageUrl: '' });
     const [profileImageFile, setProfileImageFile] = useState(null);
+    const [search, setSearch] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showNotifPanel, setShowNotifPanel] = useState(false);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
 
     // Forms
     const [applicationForm, setApplicationForm] = useState({
@@ -106,7 +109,11 @@ export default function VolunteerDashboard() {
             };
 
             // Fetch independently
-            const opps = await fetchResource(`/api/volunteer/opportunities/browse${category ? `?category=${encodeURIComponent(category)}` : ''}`, setOpportunities);
+            const query = new URLSearchParams();
+            if (category) query.set('category', category);
+            if (search && search.trim()) query.set('q', search.trim());
+            const qs = query.toString();
+            const opps = await fetchResource(`/api/volunteer/opportunities/browse${qs ? `?${qs}` : ''}`, setOpportunities);
             const appsData = await fetchResource('/api/volunteer/applications/my', setApplications);
             await fetchResource('/api/volunteer/messages/conversations', (data) => {
                 setMessages(data);
@@ -276,16 +283,82 @@ export default function VolunteerDashboard() {
                             <h1 className="text-2xl font-bold text-gray-900">{stats.name}</h1>
                             <p className="text-sm text-gray-500">{stats.email}</p>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <button className="relative p-2 text-gray-500 hover:text-gray-700">
+                        <div className="flex items-center space-x-4 relative">
+                            <button
+                                onClick={() => { setShowNotifPanel(s => !s); setShowSettingsPanel(false); }}
+                                className="relative p-2 text-gray-500 hover:text-gray-700"
+                                title="Notifications"
+                            >
                                 <Bell className="w-6 h-6" />
                                 {messages.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0) > 0 && (
                                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                                 )}
                             </button>
-                            <button className="p-2 text-gray-500 hover:text-gray-700">
+                            <button
+                                onClick={() => { setShowSettingsPanel(s => !s); setShowNotifPanel(false); }}
+                                className="p-2 text-gray-500 hover:text-gray-700"
+                                title="Settings"
+                            >
                                 <Settings className="w-6 h-6" />
                             </button>
+                            {showNotifPanel && (
+                                <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4">
+                                    <div className="font-semibold text-gray-900 mb-2">Notifications</div>
+                                    <ul className="space-y-2 text-sm">
+                                        <li className="flex items-center justify-between">
+                                            <span className="text-gray-700">Unread messages</span>
+                                            <span className="px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-700">
+                                                {messages.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)}
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center justify-between">
+                                            <span className="text-gray-700">Pending applications</span>
+                                            <span className="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-700">
+                                                {applications.filter(a => a.status === 'PENDING').length}
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center justify-between">
+                                            <span className="text-gray-700">Certificates earned</span>
+                                            <span className="px-2 py-0.5 text-xs rounded bg-green-100 text-green-700">
+                                                {certificates.length}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    <div className="mt-3 text-right">
+                                        <button
+                                            onClick={() => setShowNotifPanel(false)}
+                                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {showSettingsPanel && (
+                                <div className="absolute right-0 top-12 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2">
+                                    <button
+                                        onClick={() => { setActiveTab('profile'); setShowSettingsPanel(false); }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                    >
+                                        Profile
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveTab('messages'); setShowSettingsPanel(false); }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                    >
+                                        Messages
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            localStorage.removeItem('authToken');
+                                            window.location.href = '/login';
+                                        }}
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -451,16 +524,27 @@ export default function VolunteerDashboard() {
                                         <input
                                             type="text"
                                             placeholder="Search opportunities..."
-                                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    fetchDashboardData();
+                                                }
+                                            }}
+                                            className="pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                         />
+                                        <button
+                                            onClick={() => fetchDashboardData()}
+                                            className="absolute right-1 top-1/2 transform -translate-y-1/2 p-2 rounded-md text-gray-600 hover:bg-gray-50"
+                                            title="Search"
+                                        >
+                                            <Search className="w-5 h-5" />
+                                        </button>
                                     </div>
-                                    <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                                        <Filter className="w-5 h-5 text-gray-600" />
-                                    </button>
                                 </div>
                             </div>
 
-                            <div className="grid gap-6">
+                            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                                 {opportunities.length > 0 ? opportunities.map((opp) => (
                                     <OpportunityCard
                                         key={opp.id}

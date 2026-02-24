@@ -15,6 +15,9 @@ export default function OrganizationDashboard() {
     const [chatUser, setChatUser] = useState(null);
     const [profile, setProfile] = useState({ name: '', skills: '', location: '', profileImageUrl: '' });
     const [profileImageFile, setProfileImageFile] = useState(null);
+    const [showNotifPanel, setShowNotifPanel] = useState(false);
+    const [showSettingsPanel, setShowSettingsPanel] = useState(false);
+    const [appSearch, setAppSearch] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -399,14 +402,79 @@ export default function OrganizationDashboard() {
                             <h1 className="text-2xl font-bold text-gray-900">{stats.name}</h1>
                             <p className="text-sm text-gray-500">{stats.email}</p>
                         </div>
-                        <div className="flex items-center space-x-4">
-                            <button className="relative p-2 text-gray-500 hover:text-gray-700">
+                        <div className="flex items-center space-x-4 relative">
+                            <button
+                                onClick={() => { setShowNotifPanel(s => !s); setShowSettingsPanel(false); }}
+                                className="relative p-2 text-gray-500 hover:text-gray-700"
+                                title="Notifications"
+                            >
                                 <Bell className="w-6 h-6" />
-                                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                {(stats.pendingApplications > 0 || stats.certificatesIssued > 0) && (
+                                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                )}
                             </button>
-                            <button className="p-2 text-gray-500 hover:text-gray-700">
+                            <button
+                                onClick={() => { setShowSettingsPanel(s => !s); setShowNotifPanel(false); }}
+                                className="p-2 text-gray-500 hover:text-gray-700"
+                                title="Settings"
+                            >
                                 <Settings className="w-6 h-6" />
                             </button>
+                            {showNotifPanel && (
+                                <div className="absolute right-0 top-12 w-80 bg-white border border-gray-200 rounded-xl shadow-lg p-4">
+                                    <div className="font-semibold text-gray-900 mb-2">Notifications</div>
+                                    <ul className="space-y-2 text-sm">
+                                        <li className="flex items-center justify-between">
+                                            <span className="text-gray-700">Pending applications</span>
+                                            <span className="px-2 py-0.5 text-xs rounded bg-yellow-100 text-yellow-700">
+                                                {stats.pendingApplications}
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center justify-between">
+                                            <span className="text-gray-700">Certificates issued</span>
+                                            <span className="px-2 py-0.5 text-xs rounded bg-purple-100 text-purple-700">
+                                                {stats.certificatesIssued}
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center justify-between">
+                                            <span className="text-gray-700">Total opportunities</span>
+                                            <span className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-700">
+                                                {stats.totalOpportunities}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    <div className="mt-3 text-right">
+                                        <button
+                                            onClick={() => setShowNotifPanel(false)}
+                                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50"
+                                        >
+                                            Close
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {showSettingsPanel && (
+                                <div className="absolute right-0 top-12 w-56 bg-white border border-gray-200 rounded-xl shadow-lg py-2">
+                                    <button
+                                        onClick={() => { setActiveTab('profile'); setShowSettingsPanel(false); }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                    >
+                                        Profile
+                                    </button>
+                                    <button
+                                        onClick={() => { setActiveTab('certificates'); setShowSettingsPanel(false); }}
+                                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                    >
+                                        Certificates
+                                    </button>
+                                    <button
+                                        onClick={() => { window.location.href = '/login'; }}
+                                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </header>
@@ -628,17 +696,22 @@ export default function OrganizationDashboard() {
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-2xl font-bold text-gray-900">Manage Applications</h2>
-                                <div className="flex items-center space-x-3">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search volunteers..."
-                                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                        />
-                                    </div>
-                                    <button className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50">
-                                        <Filter className="w-5 h-5 text-gray-600" />
+                                <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search applications..."
+                                        value={appSearch}
+                                        onChange={(e) => setAppSearch(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+                                        className="pl-10 pr-12 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    />
+                                    <button
+                                        onClick={() => setAppSearch(s => s.trim())}
+                                        className="absolute right-1 top-1/2 transform -translate-y-1/2 p-2 rounded-md text-gray-600 hover:bg-gray-50"
+                                        title="Search"
+                                    >
+                                        <Search className="w-5 h-5" />
                                     </button>
                                 </div>
                             </div>
@@ -655,7 +728,17 @@ export default function OrganizationDashboard() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
-                                        {applications.length > 0 ? applications.map((app) => (
+                                        {applications.length > 0 ? applications
+                                            .filter(app => {
+                                                const q = appSearch.trim().toLowerCase();
+                                                if (!q) return true;
+                                                return (
+                                                    app.volunteerName?.toLowerCase().includes(q) ||
+                                                    app.opportunityTitle?.toLowerCase().includes(q) ||
+                                                    app.skills?.toLowerCase().includes(q)
+                                                );
+                                            })
+                                            .map((app) => (
                                             <tr key={app.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center space-x-3">
