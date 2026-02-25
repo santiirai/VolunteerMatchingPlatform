@@ -29,41 +29,26 @@ export default function OpportunityCard({
     }
     setProcessing(true);
     try {
-      if (onDonationSubmit) {
-        await onDonationSubmit({
+      const token = localStorage.getItem('authToken');
+      const res = await fetch('/api/payments/initiate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          amountNpr: Number(amount),
           opportunityId: opportunity.id,
           name: donorName,
           email: donorEmail,
-          amount: Number(amount),
-          method: 'KHALTI'
-        });
-      } else {
-        try {
-          const token = localStorage.getItem('authToken');
-          const res = await fetch('/api/donations', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({
-              opportunityId: opportunity.id,
-              name: donorName,
-              email: donorEmail,
-              amount: Number(amount),
-              method: 'KHALTI'
-            })
-          });
-          if (!res.ok) throw new Error('Donation endpoint not available');
-        } catch {
-          alert('Donation processing is not configured on the server.');
-        }
+          purchaseOrderName: `Donation for ${opportunity.title}`
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to initiate payment');
       }
-      alert('Thank you for your donation!');
-      setShowDonate(false);
-      setDonorName('');
-      setDonorEmail('');
-      setAmount('');
+      window.location.href = data.data.payment_url;
     } catch (e) {
       alert(e.message || 'Failed to donate');
     } finally {

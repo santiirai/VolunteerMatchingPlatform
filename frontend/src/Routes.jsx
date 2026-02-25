@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import LandingPage from "./pages/Landing";
 import OrganizationDashboard from "./pages/OrganizationDashboard";
 import VolunteerDashboard from "./pages/VolunteerDashboard";
+import PaymentReturn from "./pages/PaymentReturn";
 
 export default function AppRoutes() {
     return (
@@ -16,6 +17,7 @@ export default function AppRoutes() {
             <Route path="/volunteer-dashboard" element={<VolunteerDashboard />} />
             <Route path="/organization/dashboard" element={<OrganizationDashboard />} />
             <Route path="/volunteer/dashboard" element={<VolunteerDashboard />} />
+            <Route path="/payment-return" element={<PaymentReturn />} />
         </Routes>
     )
 }
