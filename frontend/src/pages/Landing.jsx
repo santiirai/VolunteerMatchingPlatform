@@ -315,7 +315,7 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-2 gap-12 items-center">
                         <div className="relative order-2 md:order-1">
                             <img
-                                src="https://images.unsplash.com/photo-1488521789041-141b4f9cbd62?q=80&w=1600&auto=format&fit=crop"
+                                src="https://images.surferseo.art/e8b41650-774d-46e4-a418-61da1e161a20.png"
                                 alt="Volunteers"
                                 className="w-full h-96 object-cover rounded-2xl shadow-lg"
                             />
@@ -384,10 +384,10 @@ export default function LandingPage() {
                     <div className="grid md:grid-cols-4 gap-8">
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2">
-                                <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-purple-600 rounded-lg flex items-center justify-center">
-                                    <Heart className="w-6 h-6 text-white" />
-                                </div>
-                                <span className="text-xl font-bold">Volunify</span>
+                                <div className="flex items-center space-x-3">
+                            <img src={logooo} alt="Logo" className="w-10 h-10 rounded-lg object-cover" onError={(e) => { e.currentTarget.src = '/logo.png'; }} />
+                            <span className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">Volunify</span>
+                        </div>
                             </div>
                             <p className="text-gray-400">
                                 Connecting volunteers with meaningful opportunities to create positive change.

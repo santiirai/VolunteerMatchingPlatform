@@ -16,7 +16,6 @@ export default function RoleBasedSignup() {
   const [focusedField, setFocusedField] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
 
   const roles = [
     {
@@ -71,10 +70,6 @@ export default function RoleBasedSignup() {
     }
     if (formData.password.length < 6) {
       setError('Password must be at least 6 characters long');
-      return false;
-    }
-    if (!agreedToTerms) {
-      setError('You must agree to the Terms & Conditions');
       return false;
     }
     return true;
@@ -228,7 +223,7 @@ export default function RoleBasedSignup() {
                     onFocus={() => setFocusedField('name')}
                     onBlur={() => setFocusedField('')}
                     className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder={formData.role === 'VOLUNTEER' ? 'John Doe' : 'Organization Name'}
+                    placeholder={formData.role === 'VOLUNTEER' ? 'Peace Huang' : 'Organization Name'}
                     disabled={loading}
                   />
                 </div>
@@ -249,7 +244,7 @@ export default function RoleBasedSignup() {
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField('')}
                     className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="john@example.com"
+                    placeholder="peace@example.com"
                     disabled={loading}
                   />
                 </div>
@@ -326,20 +321,6 @@ export default function RoleBasedSignup() {
                 </div>
               </div>
 
-              {/* Terms Checkbox */}
-              <div className="flex items-start space-x-2">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  checked={agreedToTerms}
-                  onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="w-4 h-4 mt-1 text-purple-600 border-gray-300 rounded focus:ring-purple-500 disabled:cursor-not-allowed"
-                  disabled={loading}
-                />
-                <label htmlFor="terms" className="text-sm text-gray-600">
-                  I agree to the <span className="text-purple-600 hover:underline cursor-pointer">Terms & Conditions</span> and <span className="text-purple-600 hover:underline cursor-pointer">Privacy Policy</span>
-                </label>
-              </div>
 
               {/* Submit Button */}
               <button
@@ -355,7 +336,6 @@ export default function RoleBasedSignup() {
                 ) : (
                   <>
                     <span>Create Account</span>
-                    <Check className="w-5 h-5" />
                   </>
                 )}
               </button>

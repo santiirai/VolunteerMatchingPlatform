@@ -115,9 +115,9 @@ export default function RoleBasedLogin() {
 
           {/* Header */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full mb-2">
+            {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full mb-2">
               <LogIn className="w-8 h-8 text-white" />
-            </div>
+            </div> */}
             <h2 className="text-3xl font-bold text-gray-800">Welcome Back</h2>
             <p className="text-gray-500">
               {step === 1 ? 'Select your account type to continue' : 'Sign in to your account'}
@@ -199,7 +199,7 @@ export default function RoleBasedLogin() {
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField('')}
                     className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="john@example.com"
+                    placeholder="peace@example.com"
                     disabled={loading}
                   />
                 </div>
@@ -270,7 +270,6 @@ export default function RoleBasedLogin() {
                 ) : (
                   <>
                     <span>Sign In</span>
-                    <LogIn className="w-5 h-5" />
                   </>
                 )}
               </button>
