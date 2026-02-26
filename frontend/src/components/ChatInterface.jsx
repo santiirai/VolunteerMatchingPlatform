@@ -54,12 +54,7 @@ export default function ChatInterface({ currentUser, startChatWith }) {
     const fetchConversations = async () => {
         try {
             const token = localStorage.getItem('authToken');
-            // Determine API endpoint based on role (though logic is same, route might differ slightly if I didn't standardize fully, but I did: /api/messages/conversations for org and /api/volunteer/messages/conversations)
-            // Wait, org routes are at /api/... and volunteer at /api/volunteer/...
-            // I need to know the base path.
-            // A simple way is to pass the base path or try both?
-            // Or better: Use the currentUser role to determine the URL.
-
+            
             const baseUrl = currentUser.role === 'ORGANIZATION' ? '/api' : '/api/volunteer';
 
             const response = await fetch(`${baseUrl}/messages/conversations`, {
@@ -212,15 +207,15 @@ export default function ChatInterface({ currentUser, startChatWith }) {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-gray-900">{selectedUser.name}</h3>
-                                    <p className="text-xs text-green-600 flex items-center">
+                                    {/* <p className="text-xs text-green-600 flex items-center">
                                         <span className="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
                                         Online
-                                    </p>
+                                    </p> */}
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2 text-gray-400">
-                                <button className="p-2 hover:bg-gray-100 rounded-full"><Phone className="w-5 h-5" /></button>
-                                <button className="p-2 hover:bg-gray-100 rounded-full"><Video className="w-5 h-5" /></button>
+                                {/* <button className="p-2 hover:bg-gray-100 rounded-full"><Phone className="w-5 h-5" /></button>
+                                <button className="p-2 hover:bg-gray-100 rounded-full"><Video className="w-5 h-5" /></button> */}
                                 <button className="p-2 hover:bg-gray-100 rounded-full"><MoreVertical className="w-5 h-5" /></button>
                             </div>
                         </div>
