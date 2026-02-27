@@ -14,10 +14,6 @@ export default function RoleBasedLogin() {
   const [focusedField, setFocusedField] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showReset, setShowReset] = useState(false);
-  const [resetEmail, setResetEmail] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [resetPassword, setResetPassword] = useState('');
 
   const roles = [
     {
@@ -95,9 +91,9 @@ export default function RoleBasedLogin() {
 
         // Redirect based on role
         if (user.role === 'VOLUNTEER') {
-          window.location.href = '/volunteer-dashboard';
+          window.location.href = '/volunteer/dashboard';
         } else if (user.role === 'ORGANIZATION') {
-          window.location.href = '/organization-dashboard';
+          window.location.href = '/organization/dashboard';
         }
       }
 
@@ -115,9 +111,9 @@ export default function RoleBasedLogin() {
 
           {/* Header */}
           <div className="text-center space-y-2">
-            {/* <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full mb-2">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full mb-2">
               <LogIn className="w-8 h-8 text-white" />
-            </div> */}
+            </div>
             <h2 className="text-3xl font-bold text-gray-800">Welcome Back</h2>
             <p className="text-gray-500">
               {step === 1 ? 'Select your account type to continue' : 'Sign in to your account'}
@@ -199,7 +195,7 @@ export default function RoleBasedLogin() {
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField('')}
                     className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="peace@example.com"
+                    placeholder="john@example.com"
                     disabled={loading}
                   />
                 </div>
@@ -250,7 +246,6 @@ export default function RoleBasedLogin() {
                 <button
                   className="text-sm text-purple-600 hover:underline font-medium disabled:cursor-not-allowed disabled:opacity-50"
                   disabled={loading}
-                  onClick={() => setShowReset(true)}
                 >
                   Forgot password?
                 </button>
@@ -270,6 +265,7 @@ export default function RoleBasedLogin() {
                 ) : (
                   <>
                     <span>Sign In</span>
+                    <LogIn className="w-5 h-5" />
                   </>
                 )}
               </button>
@@ -288,104 +284,12 @@ export default function RoleBasedLogin() {
           {/* Sign Up Link */}
           <div className="text-center text-sm text-gray-600">
             Don't have an account?{' '}
-            <Link
-              to="/Signup"
-              className="text-purple-600 font-semibold hover:underline"
-            >
+            <Link to="/signup" className="text-purple-600 font-semibold hover:underline">
               Sign up
             </Link>
           </div>
         </div>
       </div>
-
-      {showReset && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Reset Password</h3>
-              <button onClick={() => setShowReset(false)} className="text-gray-500 hover:text-gray-700">Close</button>
-            </div>
-
-            {!resetToken ? (
-              <>
-                <p className="text-sm text-gray-600">Enter your account email to request a reset token.</p>
-                <input
-                  type="email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
-                />
-                <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch('/api/auth/forgot-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: resetEmail })
-                      });
-                      const data = await res.json();
-                      if (!res.ok) throw new Error(data.message || 'Failed to request reset');
-                      setResetToken(data.data?.resetToken || '');
-                      if (!data.data?.resetToken) {
-                        alert('A reset link has been sent if the email exists.');
-                      }
-                    } catch (e) {
-                      alert(e.message);
-                    }
-                  }}
-                  className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white py-2 rounded-lg font-semibold"
-                >
-                  Request Reset Token
-                </button>
-              </>
-            ) : (
-              <>
-                <p className="text-sm text-gray-600">Enter a new password. Keep your token safe.</p>
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-600">Token</label>
-                  <input
-                    type="text"
-                    value={resetToken}
-                    onChange={(e) => setResetToken(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-xs text-gray-600">New Password</label>
-                  <input
-                    type="password"
-                    value={resetPassword}
-                    onChange={(e) => setResetPassword(e.target.value)}
-                    className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
-                  />
-                </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      const res = await fetch('/api/auth/reset-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ token: resetToken, password: resetPassword })
-                      });
-                      const data = await res.json();
-                      if (!res.ok) throw new Error(data.message || 'Failed to reset password');
-                      alert('Password reset successful. Please login.');
-                      setShowReset(false);
-                      setResetEmail(''); setResetToken(''); setResetPassword('');
-                    } catch (e) {
-                      alert(e.message);
-                    }
-                  }}
-                  className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white py-2 rounded-lg font-semibold"
-                >
-                  Set New Password
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
