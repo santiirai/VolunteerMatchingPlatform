@@ -1,4 +1,5 @@
 import { prisma } from '../libs/prisma.js';
+import mysql from 'mysql2/promise';
 
 const API_URL = process.env.KHALTI_API_URL || 'https://a.khalti.com';
 const SECRET_KEY = process.env.KHALTI_SECRET_KEY || '';
@@ -12,17 +13,26 @@ const toPaisa = (npr) => {
 
 export const initiatePayment = async (req, res) => {
   try {
-    const { amountNpr, opportunityId, name, email, purchaseOrderName } = req.body;
+    const { amountNpr, opportunityId, name, email, phone, purchaseOrderName } = req.body;
+
+    console.log('[Payments] Initiating payment for:', { amountNpr, opportunityId, name, email });
+
     if (!amountNpr) {
       return res.status(400).json({ success: false, message: 'amountNpr is required' });
     }
-    const amountPaisa = toPaisa(amountNpr);
-    const userId = (req.user && req.user.id) ? req.user.id : null;
 
+    let amountPaisa;
+    try {
+      amountPaisa = toPaisa(amountNpr);
+    } catch (e) {
+      return res.status(400).json({ success: false, message: e.message });
+    }
+
+    const userId = (req.user && req.user.id) ? req.user.id : null;
     const orderId = `order_${Date.now()}`;
     const orderName = purchaseOrderName || 'Volunteer Donation';
 
-    const body = {
+    const khaltiBody = {
       return_url: `${WEBSITE_URL}/payment-return`,
       website_url: WEBSITE_URL,
       amount: amountPaisa,
@@ -30,46 +40,79 @@ export const initiatePayment = async (req, res) => {
       purchase_order_name: orderName,
       customer_info: {
         name: name || 'Donor',
-        email: email || 'donor@example.com'
+        email: email || 'donor@example.com',
+        phone: phone || "9800000000"
       }
     };
 
+    console.log('[Payments] Calling Khalti API...');
     const resp = await fetch(`${API_URL}/api/v2/epayment/initiate/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Key ${SECRET_KEY}`
       },
-      body: JSON.stringify(body)
+      body: JSON.stringify(khaltiBody)
     });
-    const data = await resp.json();
+
+    let data;
+    const respText = await resp.text();
+    try {
+      data = JSON.parse(respText);
+    } catch (e) {
+      console.error('[Payments] Failed to parse Khalti response:', respText);
+      return res.status(500).json({ success: false, message: 'Invalid response from payment gateway' });
+    }
+
     if (!resp.ok) {
+      console.error('[Payments] Khalti returned error:', data);
       return res.status(resp.status).json({ success: false, message: data?.detail || 'Failed to initiate payment', data });
     }
 
     const { pidx, payment_url } = data;
-    await prisma.payment.create({
-      data: {
-        pidx,
-        status: 'INITIATED',
-        amountPaisa,
-        userId,
-        opportunityId: opportunityId ? Number(opportunityId) : null,
-        metadata: {
-          name: name || null,
-          email: email || null,
-          orderId,
-          orderName
-        }
-      }
-    });
+    if (!pidx || !payment_url) {
+      console.error('[Payments] Missing pidx or payment_url in response:', data);
+      return res.status(500).json({ success: false, message: 'Payment gateway did not return required info' });
+    }
 
+    console.log('[Payments] Creating record in database using mysql2 fallback...');
+    const conn = await mysql.createConnection(process.env.DATABASE_URL);
+    try {
+      await conn.execute(
+        `INSERT INTO payment (pidx, status, amountPaisa, userId, opportunityId, metadata) 
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          pidx,
+          'INITIATED',
+          amountPaisa,
+          userId,
+          opportunityId ? Number(opportunityId) : null,
+          JSON.stringify({
+            name: name || null,
+            email: email || null,
+            phone: phone || null,
+            orderId,
+            orderName
+          })
+        ]
+      );
+    } finally {
+      await conn.end();
+    }
+
+    console.log('[Payments] Initiation success:', pidx);
     res.status(200).json({ success: true, data: { pidx, payment_url } });
   } catch (error) {
-    console.error('[Payments] Initiate error:', error);
-    res.status(500).json({ success: false, message: 'Payment initiation failed', error: error.message });
+    console.error('[Payments] Critical error during initiation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error during payment initiation',
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
+
 
 export const verifyPayment = async (req, res) => {
   try {
@@ -78,7 +121,7 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'pidx is required' });
     }
 
-    const payment = await prisma.payment.findUnique({ where: { pidx } });
+    const [payment] = await prisma.$queryRawUnsafe(`SELECT * FROM payment WHERE pidx = ?`, pidx);
     if (!payment) {
       return res.status(404).json({ success: false, message: 'Payment not found' });
     }
@@ -107,24 +150,24 @@ export const verifyPayment = async (req, res) => {
     else if (status === 'FAILED') mapped = 'FAILED';
     else if (status === 'REFUNDED') mapped = 'REFUNDED';
 
-    const updated = await prisma.payment.update({
-      where: { pidx },
-      data: {
-        status: mapped,
-        transactionId: txnId,
-        metadata: {
-          ...(payment.metadata || {}),
-          rawVerify: data
-        }
-      }
-    });
+    const updated = await prisma.$executeRawUnsafe(
+      `UPDATE payment SET status = ?, transactionId = ?, metadata = ? WHERE pidx = ?`,
+      mapped,
+      txnId,
+      JSON.stringify({
+        ...(payment.metadata || {}),
+        rawVerify: data
+      }),
+      pidx
+    );
 
-    res.status(200).json({ success: true, data: updated });
+    res.status(200).json({ success: true, data: { ...payment, status: mapped, transactionId: txnId } });
   } catch (error) {
     console.error('[Payments] Verify error:', error);
     res.status(500).json({ success: false, message: 'Payment verification failed', error: error.message });
   }
 };
+
 
 export const paymentCallback = async (req, res) => {
   try {
@@ -140,3 +183,64 @@ export const paymentCallback = async (req, res) => {
     res.status(500).json({ success: false, message: 'Callback handling failed', error: error.message });
   }
 };
+
+export const getMyDonations = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const donations = await prisma.$queryRawUnsafe(`
+      SELECT p.*, o.title as opportunityTitle, u.name as organizationName
+      FROM payment p
+      LEFT JOIN opportunity o ON p.opportunityId = o.id
+      LEFT JOIN user u ON o.organizationId = u.id
+      WHERE p.userId = ? AND p.status = 'COMPLETED'
+      ORDER BY p.createdAt DESC
+    `, userId);
+
+    res.status(200).json({
+      success: true,
+      data: donations.map(d => ({
+        id: d.id,
+        amount: d.amountPaisa / 100,
+        opportunityTitle: d.opportunityTitle || 'General Donation',
+        organizationName: d.organizationName || 'N/A',
+        date: d.createdAt,
+        transactionId: d.transactionId,
+        metadata: typeof d.metadata === 'string' ? JSON.parse(d.metadata) : d.metadata
+      }))
+    });
+  } catch (error) {
+    console.error('[Payments] GetMyDonations error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch donations' });
+  }
+};
+
+export const getReceivedDonations = async (req, res) => {
+  try {
+    const orgId = req.user.id; // Organization is also a User
+    const donations = await prisma.$queryRawUnsafe(`
+      SELECT p.*, u.name as donorName, u.email as donorEmail, o.title as opportunityTitle
+      FROM payment p
+      LEFT JOIN user u ON p.userId = u.id
+      LEFT JOIN opportunity o ON p.opportunityId = o.id
+      WHERE o.organizationId = ? AND p.status = 'COMPLETED'
+      ORDER BY p.createdAt DESC
+    `, orgId);
+
+    res.status(200).json({
+      success: true,
+      data: donations.map(d => ({
+        id: d.id,
+        amount: d.amountPaisa / 100,
+        donorName: d.donorName || (typeof d.metadata === 'string' ? JSON.parse(d.metadata).name : d.metadata?.name) || 'Anonymous',
+        donorEmail: d.donorEmail || (typeof d.metadata === 'string' ? JSON.parse(d.metadata).email : d.metadata?.email) || 'N/A',
+        opportunityTitle: d.opportunityTitle || 'General Donation',
+        date: d.createdAt,
+        transactionId: d.transactionId
+      }))
+    });
+  } catch (error) {
+    console.error('[Payments] GetReceivedDonations error:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch received donations' });
+  }
+};
+

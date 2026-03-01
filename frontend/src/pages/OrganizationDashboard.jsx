@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Building2, Users, Award, MessageCircle, Plus, Search, Filter, Menu, X, LogOut, Bell, Settings, Calendar, MapPin, Clock, CheckCircle, XCircle, Download, Send, Eye, Loader2, Trash2 } from 'lucide-react';
+import { Heart, Building2, Users, Award, MessageCircle, Plus, Search, Filter, Menu, X, LogOut, Bell, Settings, Calendar, MapPin, Clock, CheckCircle, XCircle, Download, Send, Eye, Loader2, Trash2, HeartHandshake } from 'lucide-react';
 import ChatInterface from '../components/ChatInterface';
 
 export default function OrganizationDashboard() {
@@ -34,6 +34,7 @@ export default function OrganizationDashboard() {
     const [opportunities, setOpportunities] = useState([]);
     const [applications, setApplications] = useState([]);
     const [certificates, setCertificates] = useState([]);
+    const [receivedDonations, setReceivedDonations] = useState([]);
 
     // Forms
     const [opportunityForm, setOpportunityForm] = useState({
@@ -119,6 +120,7 @@ export default function OrganizationDashboard() {
             const oppsData = await fetchResource('/api/opportunities', setOpportunities);
             const appsData = await fetchResource('/api/applications', setApplications);
             const certsData = await fetchResource('/api/certificates', setCertificates);
+            await fetchResource('/api/payments/received', setReceivedDonations);
 
             // User Data
             try {
@@ -261,7 +263,7 @@ export default function OrganizationDashboard() {
                     if (prev.some(c => c.id === data.certificate.id)) return prev;
                     return [data.certificate, ...prev];
                 });
-                
+
                 // Update stats
                 setStats(prev => ({
                     ...prev,
@@ -294,7 +296,7 @@ export default function OrganizationDashboard() {
 
             // Remove from list
             setCertificates(prev => prev.filter(c => c.id !== certificateId));
-            
+
             // Update stats
             setStats(prev => ({
                 ...prev,
@@ -363,6 +365,7 @@ export default function OrganizationDashboard() {
                         { id: 'overview', icon: Building2, label: 'Overview' },
                         { id: 'opportunities', icon: Heart, label: 'Opportunities' },
                         { id: 'applications', icon: Users, label: 'Applications' },
+                        { id: 'donations_received', icon: HeartHandshake, label: 'Donation Received' },
                         { id: 'messages', icon: MessageCircle, label: 'Messages' },
                         { id: 'certificates', icon: Award, label: 'Certificates' },
                         { id: 'profile', icon: Settings, label: 'Profile' }
@@ -592,6 +595,7 @@ export default function OrganizationDashboard() {
                     )}
 
                     {activeTab === 'profile' && (
+                        // ... existing profile code ...
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold text-gray-900">Manage Profile</h2>
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -692,6 +696,40 @@ export default function OrganizationDashboard() {
                         </div>
                     )}
 
+                    {activeTab === 'donations_received' && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-gray-900">Donations Received</h2>
+                            <div className="surface overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Donor</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Email</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Opportunity</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount (NPR)</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {receivedDonations.length > 0 ? receivedDonations.map((donation) => (
+                                            <tr key={donation.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 font-medium text-gray-900">{donation.donorName}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{donation.donorEmail}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{donation.opportunityTitle}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-emerald-600">NPR {donation.amount}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">{new Date(donation.date).toLocaleDateString()}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No donations received yet.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'applications' && (
                         <div className="space-y-6">
                             <div className="flex items-center justify-between">
@@ -739,79 +777,79 @@ export default function OrganizationDashboard() {
                                                 );
                                             })
                                             .map((app) => (
-                                            <tr key={app.id} className="hover:bg-gray-50">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
-                                                            {app.volunteerName[0]}
+                                                <tr key={app.id} className="hover:bg-gray-50">
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center space-x-3">
+                                                            <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-600 rounded-full flex items-center justify-center text-white font-bold">
+                                                                {app.volunteerName[0]}
+                                                            </div>
+                                                            <div>
+                                                                <div className="font-semibold text-gray-900">{app.volunteerName}</div>
+                                                                <div className="text-sm text-gray-500">{app.appliedDate}</div>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <div className="font-semibold text-gray-900">{app.volunteerName}</div>
-                                                            <div className="text-sm text-gray-500">{app.appliedDate}</div>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-700">{app.opportunityTitle}</td>
+                                                    <td className="px-6 py-4 text-sm text-gray-500">{app.skills}</td>
+                                                    <td className="px-6 py-4">
+                                                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
+                                                            {app.status}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex items-center space-x-2">
+                                                            {app.status === 'PENDING' && (
+                                                                <>
+                                                                    <button
+                                                                        onClick={() => handleApplicationAction(app.id, 'ACCEPTED')}
+                                                                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                                        title="Accept"
+                                                                    >
+                                                                        <CheckCircle className="w-5 h-5" />
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleApplicationAction(app.id, 'REJECTED')}
+                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                                        title="Reject"
+                                                                    >
+                                                                        <XCircle className="w-5 h-5" />
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            {app.status === 'ACCEPTED' && (
+                                                                <button
+                                                                    onClick={() => handleApplicationAction(app.id, 'COMPLETED')}
+                                                                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                                                                >
+                                                                    Mark Complete
+                                                                </button>
+                                                            )}
+                                                            {app.status === 'COMPLETED' && (
+                                                                <button
+                                                                    onClick={() => handleGenerateCertificate(app)}
+                                                                    className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center space-x-1"
+                                                                >
+                                                                    <Award className="w-4 h-4" />
+                                                                    <span>Certificate</span>
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => {
+                                                                    setChatUser({
+                                                                        id: app.volunteerId,
+                                                                        name: app.volunteerName
+                                                                    });
+                                                                    setActiveTab('messages');
+                                                                }}
+                                                                className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                                                                title="Send Message"
+                                                            >
+                                                                <MessageCircle className="w-5 h-5" />
+                                                            </button>
                                                         </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{app.opportunityTitle}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">{app.skills}</td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
-                                                        {app.status}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        {app.status === 'PENDING' && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => handleApplicationAction(app.id, 'ACCEPTED')}
-                                                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                                    title="Accept"
-                                                                >
-                                                                    <CheckCircle className="w-5 h-5" />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleApplicationAction(app.id, 'REJECTED')}
-                                                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                    title="Reject"
-                                                                >
-                                                                    <XCircle className="w-5 h-5" />
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                        {app.status === 'ACCEPTED' && (
-                                                            <button
-                                                                onClick={() => handleApplicationAction(app.id, 'COMPLETED')}
-                                                                className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                                                            >
-                                                                Mark Complete
-                                                            </button>
-                                                        )}
-                                                        {app.status === 'COMPLETED' && (
-                                                            <button
-                                                                onClick={() => handleGenerateCertificate(app)}
-                                                                className="px-3 py-1 text-sm bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center space-x-1"
-                                                            >
-                                                                <Award className="w-4 h-4" />
-                                                                <span>Certificate</span>
-                                                            </button>
-                                                        )}
-                                                        <button
-                                                            onClick={() => {
-                                                                setChatUser({
-                                                                    id: app.volunteerId,
-                                                                    name: app.volunteerName
-                                                                });
-                                                                setActiveTab('messages');
-                                                            }}
-                                                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                                                            title="Send Message"
-                                                        >
-                                                            <MessageCircle className="w-5 h-5" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )) : (
+                                                    </td>
+                                                </tr>
+                                            )) : (
                                             <tr>
                                                 <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
                                                     No applications found.

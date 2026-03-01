@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, User, Award, MessageCircle, Search, Menu, LogOut, Bell, Settings, Calendar, MapPin, Clock, Building2, Send, Download, Eye, Loader2, X, CheckCircle } from 'lucide-react';
+import { Heart, User, Award, MessageCircle, Search, Menu, LogOut, Bell, Settings, Calendar, MapPin, Clock, Building2, Send, Download, Eye, Loader2, X, CheckCircle, HeartHandshake } from 'lucide-react';
 import OpportunityCard from '../components/OpportunityCard';
 import ChatInterface from '../components/ChatInterface';
 
@@ -26,6 +26,7 @@ export default function VolunteerDashboard() {
     const [applications, setApplications] = useState([]);
     const [messages, setMessages] = useState([]);
     const [certificates, setCertificates] = useState([]);
+    const [donations, setDonations] = useState([]);
     const [profile, setProfile] = useState({ name: '', skills: '', location: '', profileImageUrl: '' });
     const [profileImageFile, setProfileImageFile] = useState(null);
     const [search, setSearch] = useState('');
@@ -119,6 +120,7 @@ export default function VolunteerDashboard() {
                 setMessages(data);
             });
             const certsData = await fetchResource('/api/volunteer/certificates/my', setCertificates);
+            await fetchResource('/api/payments/my', setDonations);
 
             // User Data
             try {
@@ -243,6 +245,7 @@ export default function VolunteerDashboard() {
                         { id: 'applications', icon: CheckCircle, label: 'My Applications' },
                         { id: 'messages', icon: MessageCircle, label: 'Messages' },
                         { id: 'certificates', icon: Award, label: 'Certificates' },
+                        { id: 'donations', icon: HeartHandshake, label: 'Donation History' },
                         { id: 'profile', icon: Settings, label: 'Profile' }
                     ].map((item) => {
                         const Icon = item.icon;
@@ -631,8 +634,8 @@ export default function VolunteerDashboard() {
                                                         </button>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-gray-700">{new Date(app.date).toLocaleDateString()}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">{app.appliedDate}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-700">{new Date(app.date).toLocaleString()}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">{new Date(app.appliedDate).toLocaleDateString()}</td>
                                                 <td className="px-6 py-4">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
                                                         {app.status}
@@ -705,6 +708,40 @@ export default function VolunteerDashboard() {
                                         <p className="text-gray-500">No certificates earned yet</p>
                                     </div>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'donations' && (
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-gray-900">Donation History</h2>
+                            <div className="surface overflow-hidden">
+                                <table className="w-full">
+                                    <thead className="bg-gray-50 border-b border-gray-200">
+                                        <tr>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Opportunity</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount (NPR)</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
+                                            <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Transaction ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {donations.length > 0 ? donations.map((donation) => (
+                                            <tr key={donation.id} className="hover:bg-gray-50">
+                                                <td className="px-6 py-4 font-medium text-gray-900">{donation.opportunityTitle}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-600">{donation.organizationName}</td>
+                                                <td className="px-6 py-4 text-sm font-bold text-emerald-600">NPR {donation.amount}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">{new Date(donation.date).toLocaleDateString()}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-400 font-mono text-xs">{donation.transactionId}</td>
+                                            </tr>
+                                        )) : (
+                                            <tr>
+                                                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">No donation history found.</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}

@@ -15,6 +15,7 @@ export default function OpportunityCard({
   const [showDonate, setShowDonate] = useState(false);
   const [donorName, setDonorName] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
+  const [donorPhone, setDonorPhone] = useState('');
   const [amount, setAmount] = useState('');
   const [processing, setProcessing] = useState(false);
 
@@ -23,8 +24,18 @@ export default function OpportunityCard({
   const progress = targetAmount > 0 ? Math.min(100, Math.round((amountRaised / targetAmount) * 100)) : 0;
 
   const handleDonate = async () => {
-    if (!donorName || !donorEmail || !amount) {
+    if (!donorName || !donorEmail || !donorPhone || !amount) {
       alert('Please fill all donation fields');
+      return;
+    }
+    const amountVal = Math.round(Number(amount));
+    if (amountVal < 10) {
+      alert('Minimum donation amount is NPR 10');
+      return;
+    }
+    const phoneRegex = /^9[678]\d{8}$/; // Basic Nepal phone regex
+    if (!phoneRegex.test(donorPhone)) {
+      alert('Please enter a valid 10-digit Nepali mobile number (9XXXXXXXXX)');
       return;
     }
     setProcessing(true);
@@ -37,11 +48,12 @@ export default function OpportunityCard({
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          amountNpr: Number(amount),
+          amountNpr: amountVal,
           opportunityId: opportunity.id,
           name: donorName,
           email: donorEmail,
-          purchaseOrderName: `Donation for ${opportunity.title}`
+          phone: donorPhone,
+          purchaseOrderName: `Donation: ${opportunity.title.substring(0, 80)}`
         })
       });
       const data = await res.json();
@@ -58,7 +70,7 @@ export default function OpportunityCard({
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-all overflow-hidden p-6 flex flex-col gap-5">
-        <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between">
         <div className="pr-4">
           <button
             type="button"
@@ -95,57 +107,57 @@ export default function OpportunityCard({
         </span>
       </div>
 
-        <p className="text-gray-700 leading-relaxed line-clamp-2">
-          {opportunity?.description}
-        </p>
+      <p className="text-gray-700 leading-relaxed line-clamp-2">
+        {opportunity?.description}
+      </p>
 
-        <div className="h-px bg-gray-100" />
+      <div className="h-px bg-gray-100" />
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
           <span className="text-gray-600">Raised</span>
           <span className="font-semibold text-gray-900">NPR {amountRaised.toLocaleString()} / {targetAmount.toLocaleString()}</span>
         </div>
-          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-pink-500 to-purple-600" style={{ width: `${progress}%` }} />
         </div>
-          {donors && donors.length > 0 && (
-            <div className="text-xs text-gray-500">
+        {donors && donors.length > 0 && (
+          <div className="text-xs text-gray-500">
             Recent donors: {donors.slice(0, 3).map((d) => d.name).join(', ')}{donors.length > 3 ? '…' : ''}
           </div>
         )}
       </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
-          {!hasApplied ? (
-            <button
-              type="button"
-              onClick={onJoin}
-              className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all inline-flex items-center justify-center gap-2"
-            >
-              <Send className="w-4 h-4" />
-              Join as Volunteer
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="flex-1 bg-gray-200 text-gray-600 px-4 py-3 rounded-lg font-semibold cursor-not-allowed inline-flex items-center justify-center"
-              title="Already applied"
-            >
-              Already Applied
-            </button>
-          )}
+      <div className="flex flex-col sm:flex-row gap-3">
+        {!hasApplied ? (
           <button
             type="button"
-            onClick={() => setShowDonate(true)}
-            className="flex-1 border border-emerald-300 text-emerald-700 bg-white px-4 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
-            title="Donate via Khalti"
+            onClick={onJoin}
+            className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-4 py-3 rounded-lg font-semibold hover:shadow-lg transition-all inline-flex items-center justify-center gap-2"
           >
-            <HeartHandshake className="w-4 h-4" />
-            Donate to this Opportunity
+            <Send className="w-4 h-4" />
+            Join as Volunteer
           </button>
-        </div>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="flex-1 bg-gray-200 text-gray-600 px-4 py-3 rounded-lg font-semibold cursor-not-allowed inline-flex items-center justify-center"
+            title="Already applied"
+          >
+            Already Applied
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => setShowDonate(true)}
+          className="flex-1 border border-emerald-300 text-emerald-700 bg-white px-4 py-3 rounded-lg font-semibold hover:bg-emerald-50 transition-all flex items-center justify-center gap-2"
+          title="Donate via Khalti"
+        >
+          <HeartHandshake className="w-4 h-4" />
+          Donate to this Opportunity
+        </button>
+      </div>
 
       {showDonate && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -171,6 +183,16 @@ export default function OpportunityCard({
                   type="email"
                   value={donorEmail}
                   onChange={(e) => setDonorEmail(e.target.value)}
+                  className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-600">Phone</label>
+                <input
+                  type="tel"
+                  value={donorPhone}
+                  onChange={(e) => setDonorPhone(e.target.value)}
+                  placeholder="98XXXXXXXX"
                   className="w-full border-2 border-gray-200 rounded-lg px-3 py-2 focus:border-purple-500"
                 />
               </div>
