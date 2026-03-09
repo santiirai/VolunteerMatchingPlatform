@@ -21,10 +21,10 @@ router.get('/health', (req, res) => {
 
 // API routes
 router.use('/auth', authRoutes);
+router.use('/payments', paymentsRoutes); // Moved up to avoid orgRoutes middleware catch-all
 router.use('/', orgRoutes); // Mount directly for simplicity as per frontend paths (/api/opportunities/create etc.)
 router.use('/volunteer', volunteerRoutes); // Volunteer-specific routes
 router.use('/profile', profileRoutes);
-router.use('/payments', paymentsRoutes);
 
 console.log('[Routes] Main routes configured');
 

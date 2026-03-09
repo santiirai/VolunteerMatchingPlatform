@@ -8,7 +8,7 @@ const API_BASE_URL = 'http://localhost:5000/api';
  * Make an API request
  */
 const apiRequest = async (endpoint, options = {}) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('authToken');
   
   const config = {
     headers: {
@@ -30,6 +30,13 @@ const apiRequest = async (endpoint, options = {}) => {
     
     if (!response.ok) {
       console.error('[API] Error response:', data);
+      if (response.status === 401 || response.status === 403) {
+        try {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('userId');
+        } catch {}
+      }
       throw new Error(data.message || 'API request failed');
     }
     

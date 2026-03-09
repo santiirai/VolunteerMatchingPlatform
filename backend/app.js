@@ -19,7 +19,8 @@ app.use(requestLogger);
 // CORS middleware (allowing frontend to access backend)
 app.use((req, res, next) => {
   console.log('[Server] CORS middleware applied');
-  res.header('Access-Control-Allow-Origin', 'http://localhost:5173'); // Vite default port
+  const allowedOrigin = process.env.WEBSITE_URL || 'http://localhost:5173';
+  res.header('Access-Control-Allow-Origin', allowedOrigin);
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   

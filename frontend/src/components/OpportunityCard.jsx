@@ -41,7 +41,7 @@ export default function OpportunityCard({
     setProcessing(true);
     try {
       const token = localStorage.getItem('authToken');
-      const res = await fetch('/api/payments/initiate', {
+      const res = await fetch('http://localhost:5000/api/payments/initiate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

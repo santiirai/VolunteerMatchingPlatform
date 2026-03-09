@@ -80,22 +80,41 @@ export default function RoleBasedLogin() {
       }
 
       // Store token in localStorage or cookie
+      // if (jsonResponse.success && jsonResponse.data) {
+      //   const { token, user } = jsonResponse.data;
+
+      //   if (token) {
+      //     localStorage.setItem('authToken', token);
+      //     localStorage.setItem('userRole', user.role);
+      //     localStorage.setItem('userId', user.id);
+      //   }
+
+      //   // Redirect based on role
+      //   if (user.role === 'VOLUNTEER') {
+      //     window.location.href = '/volunteer/dashboard';
+      //   } else if (user.role === 'ORGANIZATION') {
+      //     window.location.href = '/organization/dashboard';
+      //   }
+      // }
       if (jsonResponse.success && jsonResponse.data) {
-        const { token, user } = jsonResponse.data;
+  const { token, user } = jsonResponse.data;
 
-        if (token) {
-          localStorage.setItem('authToken', token);
-          localStorage.setItem('userRole', user.role);
-          localStorage.setItem('userId', user.id);
-        }
+  console.log("TOKEN FROM BACKEND:", token);
 
-        // Redirect based on role
-        if (user.role === 'VOLUNTEER') {
-          window.location.href = '/volunteer/dashboard';
-        } else if (user.role === 'ORGANIZATION') {
-          window.location.href = '/organization/dashboard';
-        }
-      }
+  if (token) {
+    localStorage.setItem('authToken', token);
+    localStorage.setItem('userRole', user.role);
+    localStorage.setItem('userId', user.id);
+  }
+
+  console.log("TOKEN SAVED:", localStorage.getItem('authToken'));
+
+  if (user.role === 'VOLUNTEER') {
+    window.location.href = '/volunteer/dashboard';
+  } else if (user.role === 'ORGANIZATION') {
+    window.location.href = '/organization/dashboard';
+  }
+}
 
     } catch (err) {
       setError(err.message || 'An error occurred during login');

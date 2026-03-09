@@ -14,7 +14,7 @@ const limiter = rateLimit({
 
 router.use(limiter);
 
-router.post('/initiate', authenticateToken, initiatePayment);
+router.post('/initiate', initiatePayment);
 router.post('/verify', verifyPayment);
 router.post('/callback', paymentCallback);
 

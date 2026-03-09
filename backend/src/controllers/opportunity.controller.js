@@ -75,14 +75,12 @@ export const getOrgOpportunities = async (req, res) => {
 export const getAllOpportunities = async (req, res) => {
     try {
         const { category, q } = req.query;
-        const now = new Date();
-        const where = {
-            date: { gte: now }
-        };
+        
+        // Remove the strict date filter to show all opportunities
+        const where = {};
 
         if (category) {
             const c = String(category).trim();
-            // Basic contains filters; case sensitivity depends on DB collation
             where.OR = [
                 { title: { contains: c } },
                 { description: { contains: c } },
@@ -116,11 +114,16 @@ export const getAllOpportunities = async (req, res) => {
             orderBy: { date: 'asc' }
         });
 
+        console.log(`[Opportunities] Found ${opportunities.length} total opportunities`);
+        if (opportunities.length > 0) {
+            console.log('[Opportunities] First opportunity:', JSON.stringify(opportunities[0], null, 2));
+        }
+
         const formattedOpportunities = opportunities.map(opp => ({
             ...opp,
-            organizationName: opp.organization.name,
-            applicants: opp._count.applications,
-            status: 'Active'
+            organizationName: opp.organization?.name || 'N/A',
+            applicants: opp._count?.applications || 0,
+            status: new Date(opp.date) >= new Date() ? 'Active' : 'Completed'
         }));
 
         res.status(200).json({

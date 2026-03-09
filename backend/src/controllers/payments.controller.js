@@ -1,13 +1,35 @@
 import { prisma } from '../libs/prisma.js';
 import mysql from 'mysql2/promise';
 
-const API_URL = process.env.KHALTI_API_URL || 'https://a.khalti.com';
-const SECRET_KEY = process.env.KHALTI_SECRET_KEY || '';
-const WEBSITE_URL = process.env.WEBSITE_URL || 'http://localhost:5174';
+const getKhaltiConfig = () => {
+  let secretKey = (process.env.KHALTI_SECRET_KEY || '').trim();
+  
+  // Remove "Key " prefix if the user accidentally included it in .env
+  if (secretKey.startsWith('Key ')) {
+    secretKey = secretKey.replace('Key ', '').trim();
+  }
+
+  // Auto-detect URL based on key prefix (live_ vs test_) or key length
+  let apiUrl = process.env.KHALTI_API_URL;
+  if (!apiUrl) {
+    if (secretKey.startsWith('live_') || (secretKey.length === 32 && !secretKey.startsWith('test_'))) {
+      // If it's a 32-char hex (like in the user's screenshot) or starts with live_, use the live URL
+      // Khalti's v2 API sometimes requires the live URL even for sandbox if the keys are in that format.
+      apiUrl = 'https://khalti.com';
+    } else {
+      apiUrl = 'https://a.khalti.com';
+    }
+  }
+  
+  return { secretKey, apiUrl };
+};
+
+const { secretKey: SECRET_KEY, apiUrl: API_URL } = getKhaltiConfig();
+const WEBSITE_URL = (process.env.WEBSITE_URL || 'http://localhost:5173').trim();
 
 const toPaisa = (npr) => {
   const val = Math.round(Number(npr) * 100);
-  if (Number.isNaN(val) || val <= 0) throw new Error('Invalid amount');
+  if (Number.isNaN(val) || val < 1000) throw new Error('Minimum donation amount is NPR 10');
   return val;
 };
 
@@ -16,6 +38,11 @@ export const initiatePayment = async (req, res) => {
     const { amountNpr, opportunityId, name, email, phone, purchaseOrderName } = req.body;
 
     console.log('[Payments] Initiating payment for:', { amountNpr, opportunityId, name, email });
+
+    if (!SECRET_KEY) {
+      console.error('[Payments] KHALTI_SECRET_KEY is missing in environment variables');
+      return res.status(500).json({ success: false, message: 'Payment gateway configuration missing' });
+    }
 
     if (!amountNpr) {
       return res.status(400).json({ success: false, message: 'amountNpr is required' });
@@ -45,7 +72,8 @@ export const initiatePayment = async (req, res) => {
       }
     };
 
-    console.log('[Payments] Calling Khalti API...');
+    console.log(`[Payments] Using Key: ${SECRET_KEY.substring(0, 8)}... (len: ${SECRET_KEY.length})`);
+    console.log('[Payments] Calling Khalti API at:', `${API_URL}/api/v2/epayment/initiate/`);
     const resp = await fetch(`${API_URL}/api/v2/epayment/initiate/`, {
       method: 'POST',
       headers: {
@@ -138,8 +166,18 @@ export const verifyPayment = async (req, res) => {
       },
       body: JSON.stringify({ pidx })
     });
-    const data = await resp.json();
+    
+    let data;
+    const respText = await resp.text();
+    try {
+      data = JSON.parse(respText);
+    } catch (e) {
+      console.error('[Payments] Failed to parse Khalti verify response:', respText);
+      return res.status(500).json({ success: false, message: 'Invalid response from payment gateway during verification' });
+    }
+
     if (!resp.ok) {
+      console.error('[Payments] Khalti verify error:', data);
       return res.status(resp.status).json({ success: false, message: data?.detail || 'Failed to verify payment', data });
     }
 
@@ -150,16 +188,25 @@ export const verifyPayment = async (req, res) => {
     else if (status === 'FAILED') mapped = 'FAILED';
     else if (status === 'REFUNDED') mapped = 'REFUNDED';
 
-    const updated = await prisma.$executeRawUnsafe(
-      `UPDATE payment SET status = ?, transactionId = ?, metadata = ? WHERE pidx = ?`,
-      mapped,
-      txnId,
-      JSON.stringify({
-        ...(payment.metadata || {}),
-        rawVerify: data
-      }),
-      pidx
-    );
+    const currentMetadata = typeof payment.metadata === 'string' ? JSON.parse(payment.metadata) : (payment.metadata || {});
+
+    const conn = await mysql.createConnection(process.env.DATABASE_URL);
+    try {
+      await conn.execute(
+        `UPDATE payment SET status = ?, transactionId = ?, metadata = ? WHERE pidx = ?`,
+        [
+          mapped,
+          txnId,
+          JSON.stringify({
+            ...currentMetadata,
+            rawVerify: data
+          }),
+          pidx
+        ]
+      );
+    } finally {
+      await conn.end();
+    }
 
     res.status(200).json({ success: true, data: { ...payment, status: mapped, transactionId: txnId } });
   } catch (error) {
