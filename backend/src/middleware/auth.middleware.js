@@ -35,4 +35,31 @@ export const authenticateToken = (req, res, next) => {
   }
 };
 
+/**
+ * Optional authentication middleware - attaches user if token is valid,
+ * but doesn't block the request if token is missing or invalid.
+ */
+export const optionalAuthenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  let token = authHeader && authHeader.split(' ')[1];
+
+  if (!token && req.query.token) {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const decoded = verifyToken(token);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    // If token is provided but invalid, we just proceed without req.user
+    console.log('[Auth Middleware] Optional token verification failed:', error.message);
+    next();
+  }
+};
+
 

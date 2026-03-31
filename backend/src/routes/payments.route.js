@@ -1,7 +1,7 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import { initiatePayment, verifyPayment, paymentCallback, getMyDonations, getReceivedDonations } from '../controllers/payments.controller.js';
-import { authenticateToken } from '../middleware/auth.middleware.js';
+import { authenticateToken, optionalAuthenticateToken } from '../middleware/auth.middleware.js';
 
 const router = express.Router();
 
@@ -14,8 +14,8 @@ const limiter = rateLimit({
 
 router.use(limiter);
 
-router.post('/initiate', initiatePayment);
-router.post('/verify', verifyPayment);
+router.post('/initiate', optionalAuthenticateToken, initiatePayment);
+router.post('/verify', optionalAuthenticateToken, verifyPayment);
 router.post('/callback', paymentCallback);
 
 // Donation history

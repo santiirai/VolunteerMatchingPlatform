@@ -21,9 +21,13 @@ export default function PaymentReturn() {
     }
     (async () => {
       try {
+        const token = localStorage.getItem('authToken');
         const res = await fetch('/api/payments/verify', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          },
           body: JSON.stringify({ pidx })
         });
         const data = await res.json();

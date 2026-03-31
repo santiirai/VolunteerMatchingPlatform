@@ -24,9 +24,6 @@ const getKhaltiConfig = () => {
   return { secretKey, apiUrl };
 };
 
-const { secretKey: SECRET_KEY, apiUrl: API_URL } = getKhaltiConfig();
-const WEBSITE_URL = (process.env.WEBSITE_URL || 'http://localhost:5173').trim();
-
 const toPaisa = (npr) => {
   const val = Math.round(Number(npr) * 100);
   if (Number.isNaN(val) || val < 1000) throw new Error('Minimum donation amount is NPR 10');
@@ -37,7 +34,11 @@ export const initiatePayment = async (req, res) => {
   try {
     const { amountNpr, opportunityId, name, email, phone, purchaseOrderName } = req.body;
 
+    const { secretKey: SECRET_KEY, apiUrl: API_URL } = getKhaltiConfig();
+    const WEBSITE_URL = (process.env.WEBSITE_URL || 'http://localhost:5173').trim();
+
     console.log('[Payments] Initiating payment for:', { amountNpr, opportunityId, name, email });
+    console.log('[Payments] User from token:', req.user);
 
     if (!SECRET_KEY) {
       console.error('[Payments] KHALTI_SECRET_KEY is missing in environment variables');
@@ -149,7 +150,18 @@ export const verifyPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'pidx is required' });
     }
 
-    const [payment] = await prisma.$queryRawUnsafe(`SELECT * FROM payment WHERE pidx = ?`, pidx);
+    const { secretKey: SECRET_KEY, apiUrl: API_URL } = getKhaltiConfig();
+
+    console.log('[Payments] Verifying pidx:', pidx);
+    console.log('[Payments] User from token:', req.user);
+    console.log('[Payments] Authorization Header:', req.headers.authorization);
+
+    const payment = await prisma.payment.findUnique({
+      where: { pidx }
+    });
+
+    console.log('[Payments] Found payment record:', payment);
+
     if (!payment) {
       return res.status(404).json({ success: false, message: 'Payment not found' });
     }
@@ -188,27 +200,21 @@ export const verifyPayment = async (req, res) => {
     else if (status === 'FAILED') mapped = 'FAILED';
     else if (status === 'REFUNDED') mapped = 'REFUNDED';
 
-    const currentMetadata = typeof payment.metadata === 'string' ? JSON.parse(payment.metadata) : (payment.metadata || {});
+    const currentMetadata = payment.metadata || {};
 
-    const conn = await mysql.createConnection(process.env.DATABASE_URL);
-    try {
-      await conn.execute(
-        `UPDATE payment SET status = ?, transactionId = ?, metadata = ? WHERE pidx = ?`,
-        [
-          mapped,
-          txnId,
-          JSON.stringify({
-            ...currentMetadata,
-            rawVerify: data
-          }),
-          pidx
-        ]
-      );
-    } finally {
-      await conn.end();
-    }
+    const updatedPayment = await prisma.payment.update({
+      where: { pidx },
+      data: {
+        status: mapped,
+        transactionId: txnId,
+        metadata: {
+          ...currentMetadata,
+          rawVerify: data
+        }
+      }
+    });
 
-    res.status(200).json({ success: true, data: { ...payment, status: mapped, transactionId: txnId } });
+    res.status(200).json({ success: true, data: updatedPayment });
   } catch (error) {
     console.error('[Payments] Verify error:', error);
     res.status(500).json({ success: false, message: 'Payment verification failed', error: error.message });
@@ -234,25 +240,34 @@ export const paymentCallback = async (req, res) => {
 export const getMyDonations = async (req, res) => {
   try {
     const userId = req.user.id;
-    const donations = await prisma.$queryRawUnsafe(`
-      SELECT p.*, o.title as opportunityTitle, u.name as organizationName
-      FROM payment p
-      LEFT JOIN opportunity o ON p.opportunityId = o.id
-      LEFT JOIN user u ON o.organizationId = u.id
-      WHERE p.userId = ? AND p.status = 'COMPLETED'
-      ORDER BY p.createdAt DESC
-    `, userId);
+    // Using findMany for better relationship handling
+    const donations = await prisma.payment.findMany({
+      where: {
+        userId: userId,
+        status: 'COMPLETED'
+      },
+      include: {
+        opportunity: {
+          include: {
+            organization: {
+              select: { name: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.status(200).json({
       success: true,
       data: donations.map(d => ({
         id: d.id,
         amount: d.amountPaisa / 100,
-        opportunityTitle: d.opportunityTitle || 'General Donation',
-        organizationName: d.organizationName || 'N/A',
+        opportunityTitle: d.opportunity?.title || 'General Donation',
+        organizationName: d.opportunity?.organization?.name || 'N/A',
         date: d.createdAt,
         transactionId: d.transactionId,
-        metadata: typeof d.metadata === 'string' ? JSON.parse(d.metadata) : d.metadata
+        metadata: d.metadata
       }))
     });
   } catch (error) {
@@ -263,27 +278,46 @@ export const getMyDonations = async (req, res) => {
 
 export const getReceivedDonations = async (req, res) => {
   try {
-    const orgId = req.user.id; // Organization is also a User
-    const donations = await prisma.$queryRawUnsafe(`
-      SELECT p.*, u.name as donorName, u.email as donorEmail, o.title as opportunityTitle
-      FROM payment p
-      LEFT JOIN user u ON p.userId = u.id
-      LEFT JOIN opportunity o ON p.opportunityId = o.id
-      WHERE o.organizationId = ? AND p.status = 'COMPLETED'
-      ORDER BY p.createdAt DESC
-    `, orgId);
+    const orgId = req.user.id;
+    
+    // Find all opportunities for this organization
+    const orgOpps = await prisma.opportunity.findMany({
+      where: { organizationId: orgId },
+      select: { id: true }
+    });
+    const oppIds = orgOpps.map(o => o.id);
+
+    // Find payments for those opportunities
+    const donations = await prisma.payment.findMany({
+      where: {
+        opportunityId: { in: oppIds },
+        status: 'COMPLETED'
+      },
+      include: {
+        user: {
+          select: { name: true, email: true }
+        },
+        opportunity: {
+          select: { title: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
     res.status(200).json({
       success: true,
-      data: donations.map(d => ({
-        id: d.id,
-        amount: d.amountPaisa / 100,
-        donorName: d.donorName || (typeof d.metadata === 'string' ? JSON.parse(d.metadata).name : d.metadata?.name) || 'Anonymous',
-        donorEmail: d.donorEmail || (typeof d.metadata === 'string' ? JSON.parse(d.metadata).email : d.metadata?.email) || 'N/A',
-        opportunityTitle: d.opportunityTitle || 'General Donation',
-        date: d.createdAt,
-        transactionId: d.transactionId
-      }))
+      data: donations.map(d => {
+        const metadata = d.metadata || {};
+        return {
+          id: d.id,
+          amount: d.amountPaisa / 100,
+          donorName: d.user?.name || metadata.name || 'Anonymous',
+          donorEmail: d.user?.email || metadata.email || 'N/A',
+          opportunityTitle: d.opportunity?.title || 'General Donation',
+          date: d.createdAt,
+          transactionId: d.transactionId
+        };
+      })
     });
   } catch (error) {
     console.error('[Payments] GetReceivedDonations error:', error);

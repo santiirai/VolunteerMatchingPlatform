@@ -23,24 +23,75 @@ export default function OpportunityCard({
   const needed = volunteersNeeded;
   const progress = targetAmount > 0 ? Math.min(100, Math.round((amountRaised / targetAmount) * 100)) : 0;
 
+  // const handleDonate = async () => {
+  //   const token = localStorage.getItem('token');
+  //   console.log("TOKEN USED IN REQUEST:", token);
+  //   if (!donorName || !donorEmail || !donorPhone || !amount) {
+  //     alert('Please fill all donation fields');
+  //     return;
+  //   }
+  //   const amountVal = Math.round(Number(amount));
+  //   if (amountVal < 10) {
+  //     alert('Minimum donation amount is NPR 10');
+  //     return;
+  //   }
+  //   const phoneRegex = /^9[678]\d{8}$/; // Basic Nepal phone regex
+  //   if (!phoneRegex.test(donorPhone)) {
+  //     alert('Please enter a valid 10-digit Nepali mobile number (9XXXXXXXXX)');
+  //     return;
+  //   }
+  //   setProcessing(true);
+  //   try {
+  //     const token = localStorage.getItem('authToken');
+  //     const res = await fetch('http://localhost:5000/api/payments/initiate', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  //       },
+  //       body: JSON.stringify({
+  //         amountNpr: amountVal,
+  //         opportunityId: opportunity.id,
+  //         name: donorName,
+  //         email: donorEmail,
+  //         phone: donorPhone,
+  //         purchaseOrderName: `Donation: ${opportunity.title.substring(0, 80)}`
+  //       })
+  //     });
+  //     const data = await res.json();
+  //     if (!res.ok || !data.success) {
+  //       throw new Error(data.message || 'Failed to initiate payment');
+  //     }
+  //     window.location.href = data.data.payment_url;
+  //   } catch (e) {
+  //     alert(e.message || 'Failed to donate');
+  //   } finally {
+  //     setProcessing(false);
+  //   }
+  // };
   const handleDonate = async () => {
+    const token = localStorage.getItem('authToken');
+    console.log("TOKEN USED IN REQUEST:", token);
+
     if (!donorName || !donorEmail || !donorPhone || !amount) {
       alert('Please fill all donation fields');
       return;
     }
+
     const amountVal = Math.round(Number(amount));
     if (amountVal < 10) {
       alert('Minimum donation amount is NPR 10');
       return;
     }
-    const phoneRegex = /^9[678]\d{8}$/; // Basic Nepal phone regex
+
+    const phoneRegex = /^9[678]\d{8}$/;
     if (!phoneRegex.test(donorPhone)) {
       alert('Please enter a valid 10-digit Nepali mobile number (9XXXXXXXXX)');
       return;
     }
+
     setProcessing(true);
     try {
-      const token = localStorage.getItem('authToken');
       const res = await fetch('http://localhost:5000/api/payments/initiate', {
         method: 'POST',
         headers: {
@@ -56,6 +107,7 @@ export default function OpportunityCard({
           purchaseOrderName: `Donation: ${opportunity.title.substring(0, 80)}`
         })
       });
+
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to initiate payment');
