@@ -199,6 +199,11 @@ export default function VolunteerDashboard() {
         return applications.some(app => app.opportunityId === opportunityId);
     };
 
+    // Check if volunteer has already supported an opportunity
+    const hasSupported = (opportunityId) => {
+        return donations.some(donation => donation.opportunityId === opportunityId);
+    };
+
     if (dataLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center brand-bg">
@@ -557,6 +562,7 @@ export default function VolunteerDashboard() {
                                         targetAmount={opp.targetAmount || 0}
                                         donors={opp.donors || []}
                                         hasApplied={hasApplied(opp.id)}
+                                        hasSupported={hasSupported(opp.id)}
                                         onView={() => {
                                             setSelectedOpportunity(opp);
                                             setShowDetailsModal(true);

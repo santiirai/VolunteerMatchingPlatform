@@ -1,9 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export default function PaymentReturn() {
   const [status, setStatus] = useState('VERIFYING');
   const [message, setMessage] = useState('');
   const [details, setDetails] = useState(null);
+
+  const getDashboardUrl = () => {
+    const role = localStorage.getItem('userRole');
+    if (role === 'VOLUNTEER') return '/volunteer-dashboard';
+    if (role === 'ORGANIZATION') return '/organization-dashboard';
+    return '/'; // Fallback to home if not logged in
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,7 +71,7 @@ export default function PaymentReturn() {
           )}
         </div>
         <div className="mt-6">
-          <a href="/" className="inline-block px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg">Go Home</a>
+          <Link to={getDashboardUrl()} className="inline-block px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg">Go Home</Link>
         </div>
       </div>
     </div>
