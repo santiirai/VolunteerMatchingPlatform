@@ -120,21 +120,6 @@ export default function OpportunityCard({
 
       <div className="h-px bg-gray-100" />
 
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-600">Raised</span>
-          <span className="font-semibold text-gray-900">NPR {amountRaised.toLocaleString()} / {targetAmount.toLocaleString()}</span>
-        </div>
-        <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-2 bg-gradient-to-r from-pink-500 to-purple-600" style={{ width: `${progress}%` }} />
-        </div>
-        {donors && donors.length > 0 && (
-          <div className="text-xs text-gray-500">
-            Recent donors: {donors.slice(0, 3).map((d) => d.name).join(', ')}{donors.length > 3 ? '…' : ''}
-          </div>
-        )}
-      </div>
-
       <div className="flex flex-col sm:flex-row gap-3">
         {!hasApplied ? (
           <button

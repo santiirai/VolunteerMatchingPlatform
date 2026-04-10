@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, User, MapPin, Briefcase, Heart, Building2, Check, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function RoleBasedSignup() {
   const [step, setStep] = useState(1);
@@ -21,14 +20,12 @@ export default function RoleBasedSignup() {
     {
       value: 'VOLUNTEER',
       label: 'Volunteer',
-      icon: Heart,
       description: 'Join opportunities and make a difference',
       color: 'from-pink-500 to-rose-600'
     },
     {
       value: 'ORGANIZATION',
       label: 'Organization',
-      icon: Building2,
       description: 'Post opportunities and find volunteers',
       color: 'from-blue-500 to-indigo-600'
     }
@@ -136,9 +133,6 @@ export default function RoleBasedSignup() {
 
           {/* Header */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full mb-2">
-              <User className="w-8 h-8 text-white" />
-            </div>
             <h2 className="text-3xl font-bold text-gray-800">Create Your Account</h2>
             <p className="text-gray-500">
               {step === 1 ? 'Choose your role to get started' : 'Complete your profile'}
@@ -148,7 +142,6 @@ export default function RoleBasedSignup() {
           {/* Error Message */}
           {error && (
             <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
@@ -164,7 +157,6 @@ export default function RoleBasedSignup() {
           {step === 1 && (
             <div className="grid md:grid-cols-2 gap-4">
               {roles.map((role) => {
-                const IconComponent = role.icon;
                 return (
                   <button
                     key={role.value}
@@ -172,9 +164,6 @@ export default function RoleBasedSignup() {
                     disabled={loading}
                     className="group relative p-6 border-2 border-gray-200 rounded-xl hover:border-purple-500 transition-all duration-300 hover:scale-105 hover:shadow-xl text-left disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <div className={`inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br ${role.color} rounded-lg mb-4 group-hover:scale-110 transition-transform`}>
-                      <IconComponent className="w-6 h-6 text-white" />
-                    </div>
                     <h3 className="text-xl font-bold text-gray-800 mb-2">{role.label}</h3>
                     <p className="text-sm text-gray-600">{role.description}</p>
                     <div className="absolute top-4 right-4 w-6 h-6 border-2 border-gray-300 rounded-full group-hover:border-purple-500 transition-colors"></div>
@@ -190,11 +179,6 @@ export default function RoleBasedSignup() {
               {/* Selected Role Display */}
               <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <div className="flex items-center space-x-3">
-                  {formData.role === 'VOLUNTEER' ? (
-                    <Heart className="w-6 h-6 text-pink-600" />
-                  ) : (
-                    <Building2 className="w-6 h-6 text-blue-600" />
-                  )}
                   <span className="font-semibold text-gray-800">
                     Signing up as {formData.role === 'VOLUNTEER' ? 'Volunteer' : 'Organization'}
                   </span>
@@ -214,7 +198,6 @@ export default function RoleBasedSignup() {
                   {formData.role === 'VOLUNTEER' ? 'Full Name' : 'Organization Name'} <span className="text-red-500">*</span>
                 </label>
                 <div className={`relative transition-all duration-200 ${focusedField === 'name' ? 'scale-[1.01]' : ''}`}>
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     name="name"
@@ -222,7 +205,7 @@ export default function RoleBasedSignup() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('name')}
                     onBlur={() => setFocusedField('')}
-                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder={formData.role === 'VOLUNTEER' ? 'Peace Huang' : 'Organization Name'}
                     disabled={loading}
                   />
@@ -235,7 +218,6 @@ export default function RoleBasedSignup() {
                   Email Address <span className="text-red-500">*</span>
                 </label>
                 <div className={`relative transition-all duration-200 ${focusedField === 'email' ? 'scale-[1.01]' : ''}`}>
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="email"
                     name="email"
@@ -243,7 +225,7 @@ export default function RoleBasedSignup() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField('')}
-                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="peace@example.com"
                     disabled={loading}
                   />
@@ -256,7 +238,6 @@ export default function RoleBasedSignup() {
                   Password <span className="text-red-500">*</span>
                 </label>
                 <div className={`relative transition-all duration-200 ${focusedField === 'password' ? 'scale-[1.01]' : ''}`}>
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
@@ -264,28 +245,19 @@ export default function RoleBasedSignup() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField('')}
-                    className="w-full pl-11 pr-12 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
                     placeholder="••••••••"
                     disabled={loading}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors disabled:cursor-not-allowed"
-                    disabled={loading}
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
                 </div>
                 <p className="text-xs text-gray-500">Must be at least 6 characters</p>
               </div>
 
-              {/* Skills Field (Volunteer only) */}
+              {/* Skills Field (Volunteer Only) */}
               {formData.role === 'VOLUNTEER' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Skills (Optional)</label>
+                  <label className="text-sm font-medium text-gray-700">Skills (comma-separated)</label>
                   <div className={`relative transition-all duration-200 ${focusedField === 'skills' ? 'scale-[1.01]' : ''}`}>
-                    <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                       type="text"
                       name="skills"
@@ -293,20 +265,18 @@ export default function RoleBasedSignup() {
                       onChange={handleChange}
                       onFocus={() => setFocusedField('skills')}
                       onBlur={() => setFocusedField('')}
-                      className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                      placeholder="e.g., Teaching, Coding, Healthcare"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      placeholder="e.g., Teaching, Marketing, Web Development"
                       disabled={loading}
                     />
                   </div>
-                  <p className="text-xs text-gray-500">Separate multiple skills with commas</p>
                 </div>
               )}
 
               {/* Location Field */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Location (Optional)</label>
+                <label className="text-sm font-medium text-gray-700">Location</label>
                 <div className={`relative transition-all duration-200 ${focusedField === 'location' ? 'scale-[1.01]' : ''}`}>
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     name="location"
@@ -314,8 +284,8 @@ export default function RoleBasedSignup() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('location')}
                     onBlur={() => setFocusedField('')}
-                    className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="City, State"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:outline-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder="e.g., Kathmandu, Nepal"
                     disabled={loading}
                   />
                 </div>
@@ -324,19 +294,15 @@ export default function RoleBasedSignup() {
 
               {/* Submit Button */}
               <button
+                type="submit"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white py-3 rounded-lg font-semibold shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-[1.01] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Creating Account...</span>
-                  </>
+                  <span>Creating Account...</span>
                 ) : (
-                  <>
-                    <span>Create Account</span>
-                  </>
+                  <span>Sign Up</span>
                 )}
               </button>
 
